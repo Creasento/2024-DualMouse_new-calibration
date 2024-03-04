@@ -297,18 +297,55 @@ void draw() {
   //line mode
   //line(Positions.get(0).x, Positions.get(0).y, Positions.get(nPos-1).x, Positions.get(nPos-1).y);
 
-  //gradiant mode
-  smooth();
-  int gradientSteps = 50; // 그라데이션 단계 수
-  
-  for (int step = 0; step < gradientSteps; step++) {
-    float gradient = map(step, 0, gradientSteps-1, 0, 1);
-    float diameter = map(step, 0, gradientSteps-1, (Positions.get(nPos-1).x-Positions.get(0).x) * 3, 0);
-    fill(255-255 * gradient,15);
-    noStroke();
+  // gradiant mode
+  float startX = Positions.get(0).x;
+  float startY = Positions.get(0).y;
+  float endX = Positions.get(nPos-1).x;
+  float endY = Positions.get(nPos-1).y;
 
-    ellipse((Positions.get(0).x+Positions.get(nPos-1).x)/2, (Positions.get(0).y+Positions.get(nPos-1).y)/2, diameter, diameter);
-  }
+  float lineLength = dist(startX, startY, endX, endY);
+  float centerX = (startX + endX) / 2;
+  float centerY = (startY + endY) / 2;
+  float radius = lineLength / 2;
+
+  float x1 = 1.25;
+  float x2 = 1.5;
+  float x3 = 1.75;
+  float x4 = 2.0;
+
+  noStroke();
+  fill(250, 100);
+  ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
+  noStroke();
+  fill(225, 100);
+  ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
+  noStroke();
+  fill(200, 100);
+  ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
+  noStroke();
+  fill(175, 100);
+  ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
+  noStroke();
+  fill(150, 100);
+  ellipse(centerX, centerY, lineLength, lineLength);
+  noStroke();
+  fill(100, 100);
+  ellipse(centerX, centerY, lineLength, lineLength);
+
+  //gradiant mode 1
+  /*
+  smooth();
+   int gradientSteps = 50; // 그라데이션 단계 수
+   
+   for (int step = 0; step < gradientSteps; step++) {
+   float gradient = map(step, 0, gradientSteps-1, 0, 1);
+   float diameter = map(step, 0, gradientSteps-1, (Positions.get(nPos-1).x-Positions.get(0).x) * 3, 0);
+   fill(255-255 * gradient,15);
+   noStroke();
+   
+   ellipse((Positions.get(0).x+Positions.get(nPos-1).x)/2, (Positions.get(0).y+Positions.get(nPos-1).y)/2, diameter, diameter);
+   }
+   */
 
   /*
     float R2 = 1.0;

@@ -31,7 +31,7 @@ boolean success_prev = false;
 int setDelay = 0;
 int frameRate = 75;
 
-int nRepeat = 5;
+int nRepeat = 2;
 int cycle = 11;
 int[] distances = {200, 400, 600};
 int[] widths = {30, 60, 90};
@@ -78,7 +78,7 @@ void setup(){
   printArray(Serial.list());
   String portName = Serial.list()[Serial.list().length - 1];
   
-  sp = new Serial(this, "COM5", 115200);
+  sp = new Serial(this, "COM6", 115200);
   sp.clear();
   
   if(def_cpi != 0) setCPI(sp, def_cpi);

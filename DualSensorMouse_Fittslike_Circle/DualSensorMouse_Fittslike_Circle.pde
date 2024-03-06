@@ -366,7 +366,7 @@ void OnClick() {
   success_prev = dist(near.x, near.y, target.x, target.y) <= current_exp.W/2;
 
   if (success_prev) cnt_success++;
-  midDist = dist()
+  6
   dots.add(near);
 
   if (cnt > 1) {

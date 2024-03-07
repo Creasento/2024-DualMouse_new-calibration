@@ -65,6 +65,9 @@ ArrayList<PVector> dots = new ArrayList<PVector>();
 ArrayList<PVector> Positions = new ArrayList<PVector>(nPos);
 ArrayList<Float> pos_values = new ArrayList<Float>();
 
+float senPos = 0.5;
+boolean visibleMode = false;
+float val = 0.5;
 
 void setup() {
 
@@ -211,10 +214,12 @@ void draw() {
   ellipse(target.x, target.y, pointSize, pointSize);
 
   //when click wrong, circle turn red
+  /*
   if (!success_prev && cnt != 0 && !test) {
-    fill(255, 0, 0);
-    ellipse(prev.x, prev.y, pointSize, pointSize);
-  }
+   fill(255, 0, 0);
+   ellipse(prev.x, prev.y, pointSize, pointSize);
+   }
+   */
 
   while (sp.available() > 0) {
     String resp = sp.readStringUntil(lf);
@@ -278,10 +283,10 @@ void draw() {
   float radius = lineLength / 2;
 
   //gradient radius of each steps
-  float x1 = 1.5;
-  float x2 = 2.0;
-  float x3 = 2.5;
-  float x4 = 3.0;
+  float x1 = val*3;
+  float x2 = val*4;
+  float x3 = val*5;
+  float x4 = val*6;
 
   //draw gradient
   noStroke();
@@ -310,23 +315,46 @@ void draw() {
   xLeft = width;
   yRight = slope * xRight + yIntercept;
   yLeft = slope * xLeft + yIntercept;
-  stroke(0);
-  strokeWeight(2);
-  line(xLeft, yLeft, xRight, yRight);
 
-  //line that sensor located
-  noFill();
-  stroke(255, 0, 0);
-  strokeWeight(2);
-  line(startX, startY, endX, endY);
+  if (visibleMode) {
+    stroke(0);
+    strokeWeight(2);
+    line(xLeft, yLeft, xRight, yRight);
+    noFill();
+    stroke(255, 0, 0);
+    strokeWeight(2);
+    line(startX, startY, endX, endY);
+  }
+
+  float normalSlope = -1 / slope;
+  float normalYIntercept = target.y - normalSlope * target.x;
+  float intersectionX = (normalYIntercept - yIntercept) / (slope - normalSlope);
+  float intersectionY = slope * intersectionX + yIntercept;
+
+  if (visibleMode) {
+    stroke(0, 255, 0);
+    strokeWeight(2);
+    line(target.x, target.y, intersectionX, intersectionY);
+  }
+
+  float pointCX = intersectionX;
+  float pointCY = intersectionY;
+
+  //line that distance middle of point-middle of the pointer @
+  if (visibleMode) {
+    stroke(0);
+    strokeWeight(2);
+    line(centerX, centerY, target.x, target.y);
+  }
 
   for (int i = 0; i < nPos; i++) {
-
     PVector CurrentPoint = Positions.get(i);
     noStroke();
     fill(poscol[i], test ? 255 : 255);
-    //point of line
-    ellipse(CurrentPoint.x, CurrentPoint.y, 5, 5);
+    //point of line @
+    if (visibleMode) {
+      ellipse(CurrentPoint.x, CurrentPoint.y, 5, 5); //sensor circle
+    }
   }
 
   for (PVector p : dots) {
@@ -335,7 +363,34 @@ void draw() {
     ellipse(p.x, p.y, 5, 5);
   }
 
+  float xFlip = endX-startX;
+  float cFlip = pointCX-startX;
+  int flip = 1;
+  float senDist = dist(startX, startY, pointCX, pointCY);
+  float senVal = senDist/lineLength;
+
+  if (xFlip > 0 && cFlip > 0 || xFlip < 0 && cFlip < 0) {
+    flip = 1;
+  } else {
+    flip = -1;
+  }
+  senPos = senVal*flip;
+
+  fill(25);
+  
+  textAlign(RIGHT, TOP);
+  text(senPos,  width/2-10, -height/2+78); //+34
+  textAlign(LEFT, TOP);
+  text("Enter: drawMode",  -width/2+10, -height/2+172); //+34
+  text("+: gradientPlus",  -width/2+10, -height/2+206); //+34
+  text("-: gradientMinus",  -width/2+10, -height/2+240); //+34
+  
+  fill(25,35);
+  textAlign(LEFT, BOTTOM);
+  text("CircleMode_V1.0",  -width/2+10, height/2-16); //+34
+  
   popMatrix();
+  
 }
 
 
@@ -366,15 +421,18 @@ void OnClick() {
   success_prev = dist(near.x, near.y, target.x, target.y) <= current_exp.W/2;
 
   if (success_prev) cnt_success++;
-  6
   dots.add(near);
 
   if (cnt > 1) {
-    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", pos_values.get(pos_values.size() - 1)) + "," + (success_prev ? "T" : "F");
-
-
-    Pos_Logger.println(Log);
-    Pos_Logger.flush();
+    if (senPos > 0 && senPos < 1) {
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("F");
+      Pos_Logger.println(Log);
+      Pos_Logger.flush();
+    } else {
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
+      Pos_Logger.println(Log);
+      Pos_Logger.flush();
+    }
   }
 
   if (cnt > cycle) {
@@ -604,5 +662,11 @@ void keyPressed() {
     StopLogging(Main_Logger);
     StopLogging(Pos_Logger);
     exit();
+  } else if (key == ENTER) {
+    visibleMode = !visibleMode;
+  } else if (key == '+') {
+    val += 0.1;
+  } else if (key == '-') {
+    val -= 0.1;
   }
 }

@@ -425,11 +425,11 @@ void OnClick() {
 
   if (cnt > 1) {
     if (senPos > 0 && senPos < 1) {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("F");
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
       Pos_Logger.println(Log);
       Pos_Logger.flush();
     } else {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("F");
       Pos_Logger.println(Log);
       Pos_Logger.flush();
     }

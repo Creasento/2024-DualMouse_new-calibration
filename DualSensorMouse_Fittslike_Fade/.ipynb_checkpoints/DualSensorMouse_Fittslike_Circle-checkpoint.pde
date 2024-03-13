@@ -259,10 +259,6 @@ void draw() {
         float CurrentPos = pos[i]/100.0;
         float vx = f_dx * (1.0 - CurrentPos) + r_dx * CurrentPos;
         float vy = f_dy * (1.0 - CurrentPos) + r_dy * CurrentPos;
-        //old version circuit mouse
-        
-        //float vx =- f_dx * (1.0 - CurrentPos) + r_dx * CurrentPos;
-        //float vy =- f_dy * (1.0 - CurrentPos) + r_dy * CurrentPos;
 
         vx *= cpi_multiplier;
         vy *= cpi_multiplier;

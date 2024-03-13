@@ -26,6 +26,8 @@ Point prev = new Point(0, 0);
 boolean test = false;
 boolean clicked = false;
 boolean success_prev = false;
+boolean fadeMode = true;
+boolean visibleMode = false;
 
 int setDelay = 0;
 int frameRate = 75;
@@ -46,7 +48,7 @@ color[] poscol = {
 
 int nRepeat = 2;
 int cycle = 11; //number of circle
-int[] distances = {200, 400, 600};
+int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
 int[] widths = {30, 60, 90};
 
 int current_cond = 0;
@@ -66,8 +68,10 @@ ArrayList<PVector> Positions = new ArrayList<PVector>(nPos);
 ArrayList<Float> pos_values = new ArrayList<Float>();
 
 float senPos = 0.5;
-boolean visibleMode = false;
 float val = 0.5;
+float fadeA = 100;
+float border = 250;
+float fadeBor = 0;
 
 void setup() {
 
@@ -260,7 +264,7 @@ void draw() {
         float vx = f_dx * (1.0 - CurrentPos) + r_dx * CurrentPos;
         float vy = f_dy * (1.0 - CurrentPos) + r_dy * CurrentPos;
         //old version circuit mouse
-        
+
         //float vx =- f_dx * (1.0 - CurrentPos) + r_dx * CurrentPos;
         //float vy =- f_dy * (1.0 - CurrentPos) + r_dy * CurrentPos;
 
@@ -276,12 +280,13 @@ void draw() {
   cursor_pos.move(constrain(cursor_pos.x, -width/2, width/2), constrain(cursor_pos.y, -height/2, height/2));
 
   // gradiant mode
+
   float startX = Positions.get(0).x;
   float startY = Positions.get(0).y;
   float endX = Positions.get(nPos-1).x;
   float endY = Positions.get(nPos-1).y;
 
-  float lineLength = dist(startX, startY, endX, endY);
+  float lineLength = dist(startX, startY, endX, endY); //length that sensor line
   float centerX = (startX + endX) / 2;
   float centerY = (startY + endY) / 2;
   float radius = lineLength / 2;
@@ -292,63 +297,81 @@ void draw() {
   float x3 = val*5;
   float x4 = val*6;
 
-  //draw gradient
-  noStroke();
-  fill(250, 100);
-  ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
-  noStroke();
-  fill(225, 100);
-  ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
-  noStroke();
-  fill(200, 100);
-  ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
-  noStroke();
-  fill(175, 100);
-  ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
-  noStroke();
-  fill(150, 100);
-  ellipse(centerX, centerY, lineLength, lineLength);
-  noStroke();
-  fill(100, 100);
-  ellipse(centerX, centerY, lineLength, lineLength);
-
   float slope = (float)(endY - startY) / (endX - startX);
   float yIntercept = startY - slope *  startX;
   float xLeft, xRight, yLeft, yRight;
+  float normalSlope = -1 / slope;
+  float normalYIntercept = target.y - normalSlope * target.x;
+  float intersectionX = (normalYIntercept - yIntercept) / (slope - normalSlope);
+  float intersectionY = slope * intersectionX + yIntercept;
+  float pointCX = intersectionX;
+  float pointCY = intersectionY;
+
   xRight = -width;
   xLeft = width;
   yRight = slope * xRight + yIntercept;
   yLeft = slope * xLeft + yIntercept;
 
+  float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
+  fadeBor = radius/2;
+
+  if (abs(dirLen) < fadeBor) {
+    fadeA = 0;
+  } else {
+    // Update fadeA based on the distance between the center of cursor and target
+    fadeA = map(dirLen, fadeBor, border, 0, 150);
+    fadeA = constrain(fadeA, 0, 150); // Ensuring fadeA stays within the range [0, 100]
+  }
+
+  if (fadeMode == false) {
+    //draw gradient
+    noStroke();
+    fill(250, 100);
+    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
+    noStroke();
+    fill(225, 100);
+    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
+    noStroke();
+    fill(200, 100);
+    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
+    noStroke();
+    fill(175, 100);
+    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
+    noStroke();
+    fill(100, 100);
+    ellipse(centerX, centerY, lineLength, lineLength);
+  } else {
+    noStroke();
+    fill(250, fadeA);
+    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
+    noStroke();
+    fill(225, fadeA);
+    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
+    noStroke();
+    fill(200, fadeA);
+    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
+    noStroke();
+    fill(175, fadeA);
+    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
+    noStroke();
+    fill(100, fadeA);
+    ellipse(centerX, centerY, lineLength, lineLength);
+  }
+
   if (visibleMode) {
     stroke(0);
     strokeWeight(2);
-    line(xLeft, yLeft, xRight, yRight);
+    line(xLeft, yLeft, xRight, yRight); //horizental line
     noFill();
     stroke(255, 0, 0);
     strokeWeight(2);
-    line(startX, startY, endX, endY);
-  }
-
-  float normalSlope = -1 / slope;
-  float normalYIntercept = target.y - normalSlope * target.x;
-  float intersectionX = (normalYIntercept - yIntercept) / (slope - normalSlope);
-  float intersectionY = slope * intersectionX + yIntercept;
-
-  if (visibleMode) {
+    line(startX, startY, endX, endY); //sensor line
     stroke(0, 255, 0);
     strokeWeight(2);
-    line(target.x, target.y, intersectionX, intersectionY);
-  }
-
-  float pointCX = intersectionX;
-  float pointCY = intersectionY;
-
-  //line that distance middle of point-middle of the pointer @
-  if (visibleMode) {
+    line(target.x, target.y, intersectionX, intersectionY); //normal vector line
     stroke(0);
     strokeWeight(2);
-    line(centerX, centerY, target.x, target.y);
+    line(centerX, centerY, target.x, target.y); //line that distance middle of point-middle of the pointer @
   }
 
   for (int i = 0; i < nPos; i++) {
@@ -381,20 +404,22 @@ void draw() {
   senPos = senVal*flip;
 
   fill(25);
-  
+
+  //TEXT
   textAlign(RIGHT, TOP);
-  text(senPos,  width/2-10, -height/2+78); //+34
+  text(senPos, width/2-10, -height/2+78); //+34
+  text(fadeA, width/2-10, -height/2+112);
+  text(dirLen, width/2-10, -height/2+112+34);
   textAlign(LEFT, TOP);
-  text("Enter: drawMode",  -width/2+10, -height/2+172); //+34
-  text("+: gradientPlus",  -width/2+10, -height/2+206); //+34
-  text("-: gradientMinus",  -width/2+10, -height/2+240); //+34
-  
-  fill(25,35);
+  text("Enter: drawMode", -width/2+10, -height/2+172); //+34
+  text("+: gradientPlus", -width/2+10, -height/2+206); //+34
+  text("-: gradientMinus", -width/2+10, -height/2+240); //+34
+
+  fill(25, 35);
   textAlign(LEFT, BOTTOM);
-  text("CircleMode_V1.0",  -width/2+10, height/2-16); //+34
-  
+  text("CircleMode_V1.0", -width/2+10, height/2-16); //+34
+
   popMatrix();
-  
 }
 
 
@@ -428,7 +453,7 @@ void OnClick() {
   dots.add(near);
 
   if (cnt > 1) {
-    if (senPos > 0 && senPos < 1) {
+    if (abs(senPos) < 1.5) {
       String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
       Pos_Logger.println(Log);
       Pos_Logger.flush();
@@ -672,5 +697,7 @@ void keyPressed() {
     val += 0.1;
   } else if (key == '-') {
     val -= 0.1;
+  } else if (key == 'f') {
+    fadeMode = !fadeMode;
   }
 }

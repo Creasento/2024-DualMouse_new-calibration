@@ -46,7 +46,7 @@ color[] poscol = {
   color(0, 127, 127)
 };
 
-int nRepeat = 2;
+int nRepeat = 1; //each trial is 15
 int cycle = 11; //number of circle
 int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
 int[] widths = {30, 60, 90};
@@ -70,8 +70,8 @@ ArrayList<Float> pos_values = new ArrayList<Float>();
 float senPos = 0.5;
 float val = 0.5;
 float fadeA = 100;
-float border = 250;
-float fadeBor = 0;
+float sen1Pos = 10;
+float sen2Pos = 70;
 
 void setup() {
 
@@ -306,6 +306,7 @@ void draw() {
   float intersectionY = slope * intersectionX + yIntercept;
   float pointCX = intersectionX;
   float pointCY = intersectionY;
+  float tarLen = dist(prev.x, prev.y, target.x, target.y);
 
   xRight = -width;
   xLeft = width;
@@ -313,14 +314,13 @@ void draw() {
   yLeft = slope * xLeft + yIntercept;
 
   float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
-  fadeBor = radius/2;
 
-  if (abs(dirLen) < fadeBor) {
+  if (abs(dirLen) < abs(tarLen/5)) {
     fadeA = 0;
   } else {
     // Update fadeA based on the distance between the center of cursor and target
-    fadeA = map(dirLen, fadeBor, border, 0, 150);
-    fadeA = constrain(fadeA, 0, 150); // Ensuring fadeA stays within the range [0, 100]
+    fadeA = map(dirLen, tarLen/5, tarLen/2, 0, 100);
+    fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
   }
 
   if (fadeMode == false) {
@@ -372,6 +372,11 @@ void draw() {
     stroke(0);
     strokeWeight(2);
     line(centerX, centerY, target.x, target.y); //line that distance middle of point-middle of the pointer @
+    for (PVector p : dots) {
+      //after click
+      fill(0, 0, 255); //blue point was left on screen(click point)
+      ellipse(p.x, p.y, 5, 5);
+    }
   }
 
   for (int i = 0; i < nPos; i++) {
@@ -382,12 +387,6 @@ void draw() {
     if (visibleMode) {
       ellipse(CurrentPoint.x, CurrentPoint.y, 5, 5); //sensor circle
     }
-  }
-
-  for (PVector p : dots) {
-    //after click
-    fill(0, 0, 255); //blue point was left on screen(click point)
-    ellipse(p.x, p.y, 5, 5);
   }
 
   float xFlip = endX-startX;

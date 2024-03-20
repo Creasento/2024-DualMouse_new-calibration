@@ -26,12 +26,12 @@ Point prev = new Point(0, 0);
 boolean test = false;
 boolean clicked = false;
 boolean success_prev = false;
-boolean fadeMode = true;
+boolean fadeMode = false;
 boolean visibleMode = false;
 
 int setDelay = 0;
 int frameRate = 75;
-  
+
 int nPos = 11;
 int[] pos = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 color[] poscol = {
@@ -107,9 +107,7 @@ void setup() {
   sp = new Serial(this, "COM6", 115200);
   sp.clear();
 
-
   println("READY");
-
 
   if (def_cpi != 0) setCPI(sp, def_cpi);
   if (def_pos != 0) setPOS(sp, def_pos);
@@ -117,9 +115,7 @@ void setup() {
   getMouseInfo(sp);
   setNpos(nPos);
 
-
   println("READY");
-
 
   Pos_Logger = StartLogging_Pos();
   Pos_Logger.println("Distance,Width,Count,PositionValue,Success");
@@ -140,7 +136,6 @@ void setup() {
 
   println("READY");
 }
-
 
 void draw() {
 
@@ -220,14 +215,6 @@ void draw() {
   fill(0, 255, 0);
   ellipse(target.x, target.y, pointSize, pointSize);
 
-  //when click wrong, circle turn red
-  /*
-  if (!success_prev && cnt != 0 && !test) {
-   fill(255, 0, 0);
-   ellipse(prev.x, prev.y, pointSize, pointSize);
-   }
-   */
-
   while (sp.available() > 0) {
     String resp = sp.readStringUntil(lf);
     if (resp == null) continue;
@@ -294,13 +281,7 @@ void draw() {
   float centerY = (startY + endY) / 2;
   float radius = lineLength / 2;
 
-  //gradient radius of each steps
-  float x1 = val*3;
-  float x2 = val*4;
-  float x3 = val*5;
-  float x4 = val*6;
-
-  float slope = (float)(endY - startY) / (endX - startX);
+  float slope = -(endY - startY) / (endX - startX);
   float yIntercept = startY - slope *  startX;
   float xLeft, xRight, yLeft, yRight;
   float normalSlope = -1 / slope;
@@ -318,48 +299,23 @@ void draw() {
 
   float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
 
-  if (abs(dirLen) < abs(tarLen/5)) {
-    fadeA = 0;
-  } else {
-    // Update fadeA based on the distance between the center of cursor and target
-    fadeA = map(dirLen, tarLen/4, tarLen/2, 0, 100);
-    fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
-  }
+  float angle = atan((centerX)/(centerY));
+  float theta = atan(()/())
 
-  if (fadeMode == false) {
-    //draw gradient
-    noStroke();
-    fill(250, 100);
-    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
-    noStroke();
-    fill(225, 100);
-    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
-    noStroke();
-    fill(200, 100);
-    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
-    noStroke();
-    fill(175, 100);
-    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
-    noStroke();
-    fill(100, 100);
-    ellipse(centerX, centerY, lineLength, lineLength);
-  } else {
-    noStroke();
-    fill(250, fadeA);
-    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
-    noStroke();
-    fill(225, fadeA);
-    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
-    noStroke();
-    fill(200, fadeA);
-    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
-    noStroke();
-    fill(175, fadeA);
-    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
-    noStroke();
-    fill(100, fadeA);
-    ellipse(centerX, centerY, lineLength, lineLength);
-  }
+  // 접점의 좌표를 계산합니다.
+  float angle = atan2(CENTER - centerY, CENTER - centerX);
+  float x1 = centerX + cos(angle) * radius;
+  float y1 = centerY + sin(angle) * radius;
+  float x2 = centerX - cos(angle) * radius;
+  float y2 = centerY - sin(angle) * radius;
+
+  // 두 직선을 그립니다.
+  stroke(0);
+  strokeWeight(2);
+  line(CENTER, CENTER, x1, y1);
+  line(CENTER, CENTER, x2, y2);
+
+
 
   if (visibleMode) {
     stroke(0);

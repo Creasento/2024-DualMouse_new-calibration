@@ -31,8 +31,8 @@ boolean visibleMode = false;
 
 int setDelay = 0;
 int frameRate = 75;
-  
-int nPos = 11;
+
+int nPos = 10;
 int[] pos = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 color[] poscol = {
   color(0, 0, 255),
@@ -44,11 +44,10 @@ color[] poscol = {
   color(0, 127, 0),
   color(127, 127, 0),
   color(0, 127, 127),
-  color(83, 83, 83),
   color(83, 83, 83)
 };
 
-int nRepeat = 1; //each trial is 15
+int nRepeat = 2; //each trial is 15
 int cycle = 11; //number of circle
 int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
 int[] widths = {30, 60, 90};
@@ -72,9 +71,9 @@ ArrayList<Float> pos_values = new ArrayList<Float>();
 float val = 0.5;
 float fadeA = 100;
 //caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 9)
-int sen1Pos = 0;
-int sen2Pos = 10;
-float senPos = (sen2Pos+sen1Pos+1)/20;
+int sen1Pos = 3;
+int sen2Pos = 9;
+float senPos = (sen2Pos+sen1Pos)/20;
 
 void setup() {
 
@@ -322,7 +321,7 @@ void draw() {
     fadeA = 0;
   } else {
     // Update fadeA based on the distance between the center of cursor and target
-    fadeA = map(dirLen, tarLen/4, tarLen/2, 0, 100);
+    fadeA = map(dirLen, tarLen/5, tarLen/2, 0, 100);
     fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
   }
 
@@ -455,7 +454,7 @@ void OnClick() {
   dots.add(near);
 
   if (cnt > 1) {
-    if (senPos < 1.0 && senPos >= 0) {
+    if (abs(senPos) < 1.5) {
       String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
       Pos_Logger.println(Log);
       Pos_Logger.flush();

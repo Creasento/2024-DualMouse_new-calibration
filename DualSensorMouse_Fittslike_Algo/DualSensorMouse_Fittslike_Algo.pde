@@ -18,6 +18,7 @@ int def_pos = 0;
 float cpi_multiplier;
 int lf = 10;
 int pointSize = 50;
+int flip = 1;
 
 Point cursor_pos = new Point(0, 0);
 Point target = new Point(0, 0);
@@ -31,7 +32,7 @@ boolean visibleMode = false;
 
 int setDelay = 0;
 int frameRate = 75;
-  
+
 int nPos = 11;
 int[] pos = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 color[] poscol = {
@@ -71,7 +72,7 @@ ArrayList<Float> pos_values = new ArrayList<Float>();
 
 float val = 0.5;
 float fadeA = 100;
-//caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 9)
+//caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
 int sen1Pos = 0;
 int sen2Pos = 10;
 float senPos = (sen2Pos+sen1Pos+1)/20;
@@ -101,25 +102,15 @@ void setup() {
   current_exp = cond.get(current_cond);
 
   printArray(Serial.list());
-  String portName = Serial.list()[Serial.list().length - 1];
-  portName = "/dev/cu.usbmodemHIDHE1";
 
   sp = new Serial(this, "COM6", 115200);
   sp.clear();
-
-
-  println("READY");
-
 
   if (def_cpi != 0) setCPI(sp, def_cpi);
   if (def_pos != 0) setPOS(sp, def_pos);
 
   getMouseInfo(sp);
   setNpos(nPos);
-
-
-  println("READY");
-
 
   Pos_Logger = StartLogging_Pos();
   Pos_Logger.println("Distance,Width,Count,PositionValue,Success");
@@ -137,8 +128,6 @@ void setup() {
   textSize(24);
   ellipseMode(CENTER);
   rectMode(CENTER);
-
-  println("READY");
 }
 
 
@@ -193,7 +182,6 @@ void draw() {
   translate(center.x, center.y);
 
   float D = current_exp.D;
-  float W = current_exp.W;
 
   prev = new Point(0, 0);
 
@@ -219,14 +207,6 @@ void draw() {
   //circle fill green that next target
   fill(0, 255, 0);
   ellipse(target.x, target.y, pointSize, pointSize);
-
-  //when click wrong, circle turn red
-  /*
-  if (!success_prev && cnt != 0 && !test) {
-   fill(255, 0, 0);
-   ellipse(prev.x, prev.y, pointSize, pointSize);
-   }
-   */
 
   while (sp.available() > 0) {
     String resp = sp.readStringUntil(lf);
@@ -279,10 +259,7 @@ void draw() {
       }
     }
   }
-
   cursor_pos.move(constrain(cursor_pos.x, -width/2, width/2), constrain(cursor_pos.y, -height/2, height/2));
-
-  // gradiant mode
 
   float startX = Positions.get(sen1Pos).x;
   float startY = Positions.get(sen1Pos).y;
@@ -294,13 +271,7 @@ void draw() {
   float centerY = (startY + endY) / 2;
   float radius = lineLength / 2;
 
-  //gradient radius of each steps
-  float x1 = val*3;
-  float x2 = val*4;
-  float x3 = val*5;
-  float x4 = val*6;
-
-  float slope = (float)(endY - startY) / (endX - startX);
+  float slope = (endY - startY) / (endX - startX);
   float yIntercept = startY - slope *  startX;
   float xLeft, xRight, yLeft, yRight;
   float normalSlope = -1 / slope;
@@ -310,73 +281,101 @@ void draw() {
   float pointCX = intersectionX;
   float pointCY = intersectionY;
   float tarLen = dist(prev.x, prev.y, target.x, target.y);
+  float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
+
+  float slopeValueX = prev.x-target.x;
+  float slopeValueY = prev.y-target.y;
+  float sx, sy, ex, ey, slopeRail;
+
+  if (slopeValueX == 0) { //target line is vertical
+    sx = target.x;
+    ex = target.x;
+    sy = startY;
+    ey = endY;
+  } else if (slopeValueY == 0) { //target line is horizental
+    sx = startX;
+    ex = endX;
+    sy = target.y;
+    ey = target.y;
+  } else {
+    slopeRail = slopeValueY/slopeValueX;
+    sx = (slopeRail*prev.x+1/slopeRail*startX+startY-prev.y)/(slopeRail+1/slopeRail);
+    ex = (slopeRail*prev.x+1/slopeRail*endX+endY-prev.y)/(slopeRail+1/slopeRail);
+    sy = slopeRail*(sx-prev.x)+prev.y;
+    ey = slopeRail*(ex-prev.x)+prev.y;
+  }
 
   xRight = -width;
   xLeft = width;
   yRight = slope * xRight + yIntercept;
   yLeft = slope * xLeft + yIntercept;
 
-  float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
+  if (fadeMode == true) {
+    float lenRails = dist(sx, sy, target.x, target.y);
+    float lenRaile = dist(ex, ey, target.x, target.y);
+    float lenRailmin = Math.min(lenRails, lenRaile);
 
-  if (abs(dirLen) < abs(tarLen/5)) {
-    fadeA = 0;
-  } else {
-    // Update fadeA based on the distance between the center of cursor and target
-    fadeA = map(dirLen, tarLen/4, tarLen/2, 0, 100);
-    fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
+    if (lenRailmin <= tarLen/4) {
+      fadeA = 0;
+    } else {
+      fadeA = map(lenRailmin, tarLen/4, tarLen/2, 0, 100);
+      fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
+    }
   }
 
-  if (fadeMode == false) {
-    //draw gradient
-    noStroke();
-    fill(250, 100);
-    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
-    noStroke();
-    fill(225, 100);
-    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
-    noStroke();
-    fill(200, 100);
-    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
-    noStroke();
-    fill(175, 100);
-    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
-    noStroke();
-    fill(100, 100);
-    ellipse(centerX, centerY, lineLength, lineLength);
-  } else {
-    noStroke();
-    fill(250, fadeA);
-    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
-    noStroke();
-    fill(225, fadeA);
-    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
-    noStroke();
-    fill(200, fadeA);
-    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
-    noStroke();
-    fill(175, fadeA);
-    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
-    noStroke();
-    fill(100, fadeA);
-    ellipse(centerX, centerY, lineLength, lineLength);
-  }
+  stroke(250, fadeA);
+  strokeWeight(420);
+  line(sx, sy, ex, ey); //normal line (Rail)
+  stroke(225, fadeA);
+  strokeWeight(320);
+  line(sx, sy, ex, ey);
+  stroke(200, fadeA);
+  strokeWeight(220);
+  line(sx, sy, ex, ey);
+  stroke(175, fadeA);
+  strokeWeight(120);
+  line(sx, sy, ex, ey);
+  stroke(100, fadeA);
+  strokeWeight(20);
+  line(sx, sy, ex, ey);
 
   if (visibleMode) {
     stroke(0);
     strokeWeight(2);
+    line(prev.x, prev.y, target.x, target.y); //line of each targets (prev+target)
+
+    stroke(0);
+    strokeWeight(2);
     line(xLeft, yLeft, xRight, yRight); //horizental line
+
     noFill();
     stroke(255, 0, 0);
     strokeWeight(2);
     line(startX, startY, endX, endY); //sensor line
+
     stroke(0, 255, 0);
     strokeWeight(2);
     line(target.x, target.y, intersectionX, intersectionY); //normal vector line
+
     stroke(0);
     strokeWeight(2);
     line(centerX, centerY, target.x, target.y); //line that distance middle of point-middle of the pointer @
+
+    noStroke();
+    fill(0, 0, 255); //blue point was left on screen(click point)
+    ellipse(sx, sy, 15, 15); //sensor start
+    noStroke();
+    fill(255, 0, 0);
+    ellipse(ex, ey, 15, 15); //sensor end
+
+    stroke(255, 0, 0);
+    strokeWeight(2); //normal line (Rail)
+    line(sx, sy, startX, startY);
+    line(ex, ey, endX, endY);
+
     for (PVector p : dots) {
       //after click
+      noStroke();
       fill(0, 0, 255); //blue point was left on screen(click point)
       ellipse(p.x, p.y, 5, 5);
     }
@@ -394,7 +393,6 @@ void draw() {
 
   float xFlip = endX-startX;
   float cFlip = pointCX-startX;
-  int flip = 1;
   float senDist = dist(startX, startY, pointCX, pointCY);
   float senVal = senDist/lineLength;
 

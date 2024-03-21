@@ -10,6 +10,17 @@ import java.awt.event.*;
 
 Serial sp;
 
+int testTrial = 1;
+
+String userName = "BMH";
+String testMode = "rail";
+
+//caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
+int sen1Pos = 4;
+int sen2Pos = 10;
+
+String testType = "" + sen1Pos + sen2Pos;
+
 String mouse_info;
 int cpi;
 int sensor_pos;
@@ -72,14 +83,11 @@ ArrayList<Float> pos_values = new ArrayList<Float>();
 
 float val = 0.5;
 float fadeA = 100;
-//caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
-int sen1Pos = 0;
-int sen2Pos = 10;
+
 float senPos;
 float ratio = float(sen2Pos-sen1Pos)/10;
 
 void setup() {
-
   LocalDateTime now = LocalDateTime.now();
   DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
   log_id = now.format(fmt);
@@ -114,7 +122,7 @@ void setup() {
   setNpos(nPos);
 
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,PositionValue,Success");
+  Pos_Logger.println("Distance,Width,Count,CycleRepeat,PositionValue,Success");
 
   cpi_multiplier = (float)cpi / 12000;
 
@@ -324,20 +332,20 @@ void draw() {
     }
   }
 
-/*
+  /*
   stroke(250, fadeA);
-  strokeWeight(420);
-  line(sx, sy, ex, ey); //normal line (Rail)
-  stroke(225, fadeA);
-  strokeWeight(320);
-  line(sx, sy, ex, ey);
-  stroke(200, fadeA);
-  strokeWeight(220);
-  line(sx, sy, ex, ey);
-  stroke(175, fadeA);
-  strokeWeight(120);
-  line(sx, sy, ex, ey);
-  */
+   strokeWeight(420);
+   line(sx, sy, ex, ey); //normal line (Rail)
+   stroke(225, fadeA);
+   strokeWeight(320);
+   line(sx, sy, ex, ey);
+   stroke(200, fadeA);
+   strokeWeight(220);
+   line(sx, sy, ex, ey);
+   stroke(175, fadeA);
+   strokeWeight(120);
+   line(sx, sy, ex, ey);
+   */
   stroke(100, fadeA);
   strokeWeight(20);
   line(sx, sy, ex, ey);
@@ -404,7 +412,7 @@ void draw() {
   } else {
     flip = -1;
   }
-  
+
   senPos =senVal*flip*ratio+float(sen1Pos)/10;
 
   fill(25);
@@ -458,11 +466,11 @@ void OnClick() {
 
   if (cnt > 1) {
     if (senPos < 1.0 && senPos >= 0) {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + "," + String.format("%.2f", senPos) + "," + ("T");
       Pos_Logger.println(Log);
       Pos_Logger.flush();
     } else {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("F");
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + "," + String.format("%.2f", senPos) + "," + ("F");
       Pos_Logger.println(Log);
       Pos_Logger.flush();
     }
@@ -595,31 +603,46 @@ void setNpos(int nPos) {
   cursor_pos.move(0, 0);
 }
 
-
 PrintWriter StartLogging_Pos() {
 
   String CurrentMode = test ? "Main" : "Practice";
   String msinfo = cpi + "_" + sensor_pos;
-  String LogName = "./Logs/" + log_id + "_" + CurrentMode + "_" + msinfo + "_logs/Pos_values.csv";
-
+  String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
+  boolean folderExist = new File("./Logs/" + folderName).exists();
+  println(folderExist);
+  println("./Logs/" + folderName);
+  while (folderExist) {
+    testTrial++;
+    folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
+    if (testTrial > 1000) {
+      println("Error: Cannot create a new folder. Too many attempts.");
+      break;
+    }
+  }
+  String LogName = "./Logs/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_logs/Pos_values.csv";
   PrintWriter pw = createWriter(LogName);
   return pw;
 }
-
 
 PrintWriter StartLogging_Main(ArrayList<Experiment> conditions, int cond_num) {
 
   Experiment exp = conditions.get(cond_num);
   String CurrentMode = test ? "Main" : "Practice";
   String msinfo = cpi + "_" + sensor_pos;
-
-  String logName = "./Logs/" + log_id + "_" + CurrentMode + "_" + msinfo + "_" + "logs/" + exp + "_" + (cond_num + 1) + ".log";
+  String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
+  while (new File("./Logs/" + folderName).exists()) {
+    testTrial++;
+    folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
+    if (testTrial > 1000) {
+      println("Error: Cannot create a new folder. Too many attempts.");
+      break;
+    }
+  }
+  String logName = "./Logs/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_" + "logs/" + exp + "_" + (cond_num + 1) + ".log";
   PrintWriter pw = createWriter(logName);
   cnt = 0;
-
   return pw;
 }
-
 
 void StopLogging(PrintWriter pw) {
 
@@ -631,7 +654,6 @@ void StopLogging(PrintWriter pw) {
   pw = null;
 }
 
-
 PVector toPV(Point p) {
 
   float px = (float)p.x;
@@ -639,7 +661,6 @@ PVector toPV(Point p) {
 
   return new PVector(px, py);
 }
-
 
 float getDist(PVector s, PVector e, PVector p) {
 
@@ -652,7 +673,6 @@ float getDist(PVector s, PVector e, PVector p) {
   return dist;
 }
 
-
 PVector getNearest(PVector s, PVector e, PVector p) {
 
   PVector se = PVector.sub(e, s);
@@ -664,7 +684,6 @@ PVector getNearest(PVector s, PVector e, PVector p) {
 
   return new PVector(s.x + proj.x, s.y + proj.y);
 }
-
 
 void keyPressed() {
 

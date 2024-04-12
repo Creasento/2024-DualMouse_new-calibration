@@ -1,0 +1,87 @@
+﻿/**
+ * FittsStudy
+ *
+ *		Jacob O. Wobbrock, Ph.D.
+ * 		The Information School
+ *		University of Washington
+ *		Mary Gates Hall, Box 352840
+ *		Seattle, WA 98195-2840
+ *		wobbrock@uw.edu
+ *		
+ * This software is distributed under the "New BSD License" agreement:
+ * 
+ * Copyright (C) 2007-2022, Jacob O. Wobbrock. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the name of the University of Washington nor the names of its 
+ *      contributors may be used to endorse or promote products derived from 
+ *      this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Jacob O. Wobbrock
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+**/
+-------------------------------------------------------------------------------------
+Selected Bibliography of Sources for this Application
+-------------------------------------------------------------------------------------
+Douglas, S. A., Kirkpatrick, A. E. and MacKenzie, I. S. (1999). 
+	"Testing pointing device performance and user assessment with the ISO 9241, 
+	Part 9 standard." Proceedings of the ACM Conference on Human Factors in 
+	Computing Systems (CHI '99). Pittsburgh, Pennsylvania (May 15-20, 1999). 
+	New York: ACM Press, pp. 215-222.
+
+Fitts, P. M. (1954). "The information capacity of the human motor system 
+	in controlling the amplitude of movement." Journal of Experimental 
+	Psychology 47 (6), pp. 381-391.
+
+International Organization for Standardization. (2000). Ergonomic requirements 
+	for office work with visual display terminals (VDTs) — Requirements for 
+	non-keyboard input devices (ISO 9241-Part 9).
+
+MacKenzie, I. S. (1992). "Fitts' law as a research and design tool in 
+	human-computer interaction." Human-Computer Interaction 7 (1), pp. 91-139.
+
+MacKenzie, I. S., Kauppinen, T. and Silfverberg, M. (2001). "Accuracy measures 
+	for evaluating computer pointing devices." Proceedings of the ACM Conference 
+	on Human Factors in Computing Systems (CHI '01). Seattle, Washington 
+	(March 31-April 5, 2001). New York: ACM Press, pp. 9-16.
+
+Schmidt, R. A., Zelaznik, H., Hawkins, B., Frank, J. S. and Quinn, J. T. (1979). 
+	"Motor-output variability: A theory for the accuracy of rapid motor acts." 
+	Psychological Review 86 (5), pp. 415-451.
+
+Soukoreff, R. W. and MacKenzie, I. S. (2004). "Towards a standard for pointing 
+	device evaluation, perspectives on 27 years of Fitts' law research in HCI." 
+	International Journal of Human-Computer Studies 61 (6), pp. 751-789.
+
+Welford, A. T. (1968). "Movement." In Fundamentals of Skill. London, England: 
+	Methuen, pp. 137-160.
+
+Wobbrock, J. O., Cutrell, E., Harada, S. and MacKenzie, I. S. (2008). "An error 
+	model for pointing based on Fitts' law." Proceedings of the ACM Conference on 
+	Human Factors in Computing Systems (CHI '08). Florence, Italy (April 5-10, 2008). 
+	New York: ACM Press, pp. 1613-1622.
+
+Wobbrock, J. O., Shinohara, K. and Jansen, A. (2011). "The effects of task dimensionality, 
+	endpoint deviation, throughput calculation, and experiment design on pointing 
+	measures and models." Proceedings of the ACM Conference on Human Factors in 
+	Computing Systems (CHI '11). Vancouver, British Columbia (May 7-12, 2011). New York: 
+	ACM Press, pp. 1639-1648.
+
+Zhai, S. (2004). "Characterizing computer input with Fitts’ law parameters—the information 
+	and non-information aspects of pointing." International Journal of Human-Computer 
+	Studies 61 (6), pp. 791-809.

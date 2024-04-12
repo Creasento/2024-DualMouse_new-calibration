@@ -10,13 +10,14 @@ import java.awt.event.*;
 
 Serial sp;
 
-int testTrial = 1;
-
+int Try = 1;
+int testTrial = 9;
+int limitTrial = 15; //limit of trial
 String userName = "BMH";
 String testMode = "rail";
 
 //caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
-int sen1Pos = 4;
+int sen1Pos = 0;
 int sen2Pos = 10;
 
 String testType = "" + sen1Pos + sen2Pos;
@@ -60,7 +61,7 @@ color[] poscol = {
   color(83, 83, 83)
 };
 
-int nRepeat = 1; //each trial is 15
+int nRepeat = 1; //each trial is D*W
 int cycle = 11; //number of circle
 int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
 int[] widths = {30, 60, 90};
@@ -75,6 +76,7 @@ int cnt_success = 0;
 PrintWriter Main_Logger;
 PrintWriter Pos_Logger;
 String log_id = "";
+String log_yy = "";
 
 ArrayList<Experiment> cond = new ArrayList<Experiment>();
 ArrayList<PVector> dots = new ArrayList<PVector>();
@@ -95,7 +97,9 @@ void setup() {
   for (int i = 0; i < nRepeat; i++) {
     for (int D : distances) {
       for (int W : widths) {
-        cond.add(new Experiment(D, W));
+        if (cond.size() < limitTrial) {
+          cond.add(new Experiment(D, W));
+        }
       }
     }
   }
@@ -111,29 +115,20 @@ void setup() {
   current_exp = cond.get(current_cond);
 
   printArray(Serial.list());
-
   sp = new Serial(this, "COM6", 115200);
   sp.clear();
-
   if (def_cpi != 0) setCPI(sp, def_cpi);
   if (def_pos != 0) setPOS(sp, def_pos);
-
   getMouseInfo(sp);
   setNpos(nPos);
-
   Pos_Logger = StartLogging_Pos();
   Pos_Logger.println("Distance,Width,Count,CycleRepeat,PositionValue,Success");
-
   cpi_multiplier = (float)cpi / 12000;
-
   pos_values.add(sensor_pos /100.0);
-
   cursor_pos = new Point(0, 0);
-
   fullScreen();
   //frameRate(frameRate);
   noCursor();
-
   textSize(24);
   ellipseMode(CENTER);
   rectMode(CENTER);
@@ -144,14 +139,12 @@ void draw() {
 
   if (setDelay > 0) {
     background(30);
-
     if (cnt_trial == 0) {
       textAlign(CENTER, CENTER);
       text("READY", width/2, height/2 - 20);
       text(setDelay/frameRate + 1, width/2, height/2 + 20);
       text("Current Mode | " + (test ? "Test" : "Practice"), width/2, height - 30);
     }
-
     setDelay--;
     return;
   }
@@ -605,6 +598,10 @@ void setNpos(int nPos) {
 
 PrintWriter StartLogging_Pos() {
 
+  LocalDateTime now = LocalDateTime.now();
+  DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("yy.MM.dd");
+  log_yy = now.format(fmt1);
+  
   String CurrentMode = test ? "Main" : "Practice";
   String msinfo = cpi + "_" + sensor_pos;
   String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
@@ -619,12 +616,16 @@ PrintWriter StartLogging_Pos() {
       break;
     }
   }
-  String LogName = "./Logs/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_logs/Pos_values.csv";
+  String LogName = "./Logs/" + userName + "/" + Try + "/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_logs/Pos_values.csv";
   PrintWriter pw = createWriter(LogName);
   return pw;
 }
 
 PrintWriter StartLogging_Main(ArrayList<Experiment> conditions, int cond_num) {
+
+  LocalDateTime now = LocalDateTime.now();
+  DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("yy.MM.dd");
+  log_yy = now.format(fmt1);
 
   Experiment exp = conditions.get(cond_num);
   String CurrentMode = test ? "Main" : "Practice";
@@ -638,7 +639,7 @@ PrintWriter StartLogging_Main(ArrayList<Experiment> conditions, int cond_num) {
       break;
     }
   }
-  String logName = "./Logs/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_" + "logs/" + exp + "_" + (cond_num + 1) + ".log";
+  String logName = "./Logs/" + userName + "/" + Try + "/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_" + "logs/" + exp + "_" + (cond_num + 1) + ".log";
   PrintWriter pw = createWriter(logName);
   cnt = 0;
   return pw;

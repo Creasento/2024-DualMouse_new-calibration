@@ -1,0 +1,179 @@
+/**
+ * FittsStudy
+ *
+ *		Jacob O. Wobbrock, Ph.D.
+ * 		The Information School
+ *		University of Washington
+ *		Mary Gates Hall, Box 352840
+ *		Seattle, WA 98195-2840
+ *		wobbrock@uw.edu
+ *		
+ * This software is distributed under the "New BSD License" agreement:
+ * 
+ * Copyright (C) 2007-2022, Jacob O. Wobbrock. All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *    * Redistributions of source code must retain the above copyright
+ *      notice, this list of conditions and the following disclaimer.
+ *    * Redistributions in binary form must reproduce the above copyright
+ *      notice, this list of conditions and the following disclaimer in the
+ *      documentation and/or other materials provided with the distribution.
+ *    * Neither the name of the University of Washington nor the names of its 
+ *      contributors may be used to endorse or promote products derived from 
+ *      this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS
+ * IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL Jacob O. Wobbrock
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR 
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE 
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+**/
+
+NOTES:
+Comma-separated results file for FittsStudy. Each file row is a spreadsheet row 
+representing one trial. Each row has all the information needed to describe that 
+trial.
+
+ALSO SEE: Columns.xlsx (Excel file with the same information, color-coded.)
+
+TERMINOLOGY:
+- A "movement" is the mouse movement associated with a trial. Class: MovementData.
+- A "trial" is one click attempting to hit a target. Class: TrialData.
+- A "condition" is one (A x W) or (A x W x MT%) set of trials. Class: ConditionData.
+- A "block" is one set of conditions. Having multiple blocks means all conditions are run in the same order multiple times.
+- A "session" is a collection of conditions for one subject. Class: SessionData.
+- A "study" is a collection of sessions over multiple subjects. Program: FittsStudy.exe.
+
+OUTLIERS:
+Two types of outliers are defined. Spatial outliers are determined at the trial level by comparing 
+Ae to A and |dx| to W. Temporal outliers in metronome studies are time-based outliers that can be 
+determined at the trial level by comparing MTe to MT. For calculations in which spatial outliers are 
+excluded, an "(sx)" suffix is added to the column name. For calculations in which temporal outliers are 
+excluded, a "(tx)" suffix is added.
+
+1D vs. 2D:
+For a circular-target study, the approach to calculating SDx and, therefore, We = 4.133 * SDx, can
+be done using a univariate (1d) concept of deviation or a bivariate (2d) one. (For univariate
+deviation, think of a horizontal trial, and deviation would be calculated only along the x-axis, 
+ignoring orthogonal (y-axis) deviation.) For relevant measures, calculations done with a univariate model
+are marked with the suffix "(1d)", and for a bivariate model, "(2d)". For one-dimensional ribbon trials,
+the two values should be identical since movement orthogonal to the task axis is ignored.
+
+LEGEND BELOW:
+For movement-level data, a slash (/) is used. For trial-level data, a colon (:) is used. 
+For condition-level data, a vertical bar (|) is used. For session-level data, an exclamation 
+point (!) is used. (Note that because each movement is associated with one and only one trial,
+movement statistics are also trial-level statistics.)
+
+87 COLUMNS:
+
+Subject				!	Subject number identifier (1..n).
+Circular?			!	1 if it was a circular task or 0 if it was a vertical ribbon task, each defined by ISO 9241-9.
+Block				|	The block index number to which this condition belongs (i.e., a condition-repeat number).
+Condition			|	The (A x W x MT%) or (A x W) condition index (0..n-1).
+Trial				:	The trial number within this condition (1..n).
+Practice?			:	1 if the trial was practice; 0 otherwise. (Practice trials are ignored in all calculations.)
+
+Metronome?			!	1 for when a normative MT is specified; 0 for traditional Fitts' law test.
+MT%					|	Normative MT% of predicted MT (e.g., 1.10 is 110% of MTpred, 0.90 is 90% of MTpred); -1 for non-metronome trials.
+MTPred				|	The predicted MT (in ms) based on Fitts' law using a(given) and b(given); -1 for non-metronome trials.
+MT					|	Actual time (in ms) of normative MT, i.e., MT%*MTPred; -1 for non-metronome trials.
+a(given)			!	The intercept regression coefficient used to compute MT (in ms); -1 for non-metronome trials.
+b(given)			!	The slope regression coefficient used to compute MT (in ms/bit); -1 for non-metronome trials.
+
+A					|	Nominal amplitude for trials in this condition.
+W					|	Nominal width for trials in this condition.
+ID					|	Nominal index of difficulty for trials in this condition: log2(A/W+1).
+axis				:	The nominal angle of the task axis, in degrees. 
+
+angle				:	The actual overall angle of movement, in degrees.
+ae(1d)				:	The univariate effective amplitude for this trial.
+dx(1d)				:	The univariate distance from the selection endpoint to the target center.
+ae(2d)				:	The bivariate effective amplitude for this trial.
+dx(2d)				:	The bivariate distance from the selection endpoint to the target center.
+
+Ae(1d)				|	The mean univariate distance averaged over trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+SD(1d)				|	The univariate standard deviation of selection endpoints for trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+We(1d)				|	Crossman's correction for target width: 4.133 * SD(1d). Spatial outliers excluded. [Practice trials excluded.]
+IDe(1d)				|	Effective index of difficulty: log2(Ae(1d) / We(1d) + 1). Spatial outliers excluded. [Practice trials excluded.]
+TP(1d)				|	Throughput for this condition (in bits/s): IDe(1d)/MeanMTe(sx). Spatial outliers excluded. [Practice trials excluded.]
+
+Ae(2d)				|	The mean bivariate distance averaged over trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+SD(2d)				|	The bivariate standard deviation of selection endpoints for trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+We(2d)				|	Crossman's correction for target width: 4.133 * SD(2d). Spatial outliers excluded. [Practice trials excluded.]
+IDe(2d)				|	Effective index of difficulty: log2(Ae(2d) / We(2d) + 1). Spatial outliers excluded. [Practice trials excluded.]
+TP(2d)				|	Throughput for this condition (in bits/s): IDe(2d)/MeanMTe(sx). Spatial outliers excluded. [Practice trials excluded.]
+
+MTe					:	Effective (observed) movement time for this trial (in ms). Ideally, will be close to MT.
+MTRatio				:	Defined as MTe/MT. If MTe slower than MT, will be >1; if MTe faster than MT, will be <1; -1 for non-metronome trials.
+MeanMTe				|	Average movement time (in ms) for trials in this condition. All outliers included. [Practice trials excluded.]
+MeanMTe(sx)			|	Average movement time (in ms) for trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+MeanMTe(tx)			|	Average movement time (in ms) for trials in this condition. Temporal outliers excluded. [Practice trials excluded.]
+
+Entries				:	The number of times the target was entered.
+Overshoots			:	The number of times the mouse passed beyond the target's far edge, relative to the cursor's position, whether inside or outside the target.
+Error?				:	1 if the target was missed; 0 if it was hit.
+Errors  			|	Number of error trials in this condition. All outliers included. [Practice trials excluded.]
+Errors(sx)			|	Number of error trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+Errors(tx)			|	Number of error trials in this condition. Temporal outliers excluded. [Practice trials excluded.]
+Error%				|	Percentage errors for trials in this condition. All outliers included. [Practice trials excluded.]
+Error%(sx)			|	Percentage errors for trials in this condition. Spatial outliers excluded. [Practice trials excluded.]
+Error%(tx)			|	Percentage errors for trials in this condition. Temporal outliers excluded. [Practice trials excluded.]
+
+SpatialOutlier?		:	1 if an error and if (a) ae < A/2 or (b) |dx| > 2*W; 0 otherwise. If the trials are ribbons, then ae(1d) and dx(1d) are used; if circles, then ae(2d) and dx(2d) are used.
+TemporalOutlier?	:	1 if MTe < MT*0.75 or MTe > MT*1.25; 0 otherwise.
+SpatialOutliers		|	Number of spatial outliers in this condition. [Practice trials excluded.]
+TemporalOutliers	|	Number of temporal outliers in this condition. [Practice trials excluded.]
+
+StartX				:	The x-coordinate trial starting point.
+StartY				:	The y-coordinate trial starting point.
+EndX				:	The x-coordinate trial ending point.
+EndY				:	The y-coordinate trial ending point.
+TargetX				:	The x-coordinate of the target center.
+TargetY				:	The y-coordinate of the target center. For ribbon trials, this coordinate is horizontal from the start point.
+
+Travel				/	Total pixel mouse travel distance (i.e., path distance) for this trial.
+Duration			/	The total movement time (ms) not counting the click for this trial.
+Submovements		/	Number of submovements in the resampled (100 Hz) and Gaussian smoothed (kernel stdev=5) velocity profile.
+
+MaxVelocity			/	The maximum velocity obtained from the resampled (100 Hz) velocity profile, in px/ms.
+MaxAcceleration		/	The maximum acceleration obtained from the resampled (100 Hz) acceleration profile, in px/ms^2.
+MaxJerk				/	The maximum jerk obtained from the resampled (100 Hz) jerk profile, in px/ms^3.
+tMaxVelocity		/	The normalized time (0..1) of the maximum velocity occuring in this movement.
+tMaxAcceleration	/	The normalized time (0..1) of the maximum acceleration occuring in this movement.
+tMaxJerk			/	The normalized time (0..1) of the maximum jerk occuring in this movement.
+
+TAC					/	Task axis crossings, a measure from MacKenzie et al. (2001).
+MDC					/	Movement direction changes, a measure from MacKenzie et al. (2001).
+ODC					/	Orthogonal direction changes, a measure from MacKenzie et al. (2001).
+MV					/	Movement variability in pixels, a measure from MacKenzie et al. (2001).
+ME					/	Movement error in pixels, a measure from MacKenzie et al. (2001).
+MO					/	Movement offset in pixels, a measure from MacKenzie et al. (2001).
+
+N					!	Number of points in regression fitting. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_TP_avg(1d)	!	Univariate throughput for this session (in bits/s) computed as the mean of condition TP's. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_TP_inv(1d)	!	Univariate throughput for this session (in bits/s) computed as the inverse of the slope (1/b) regression parameter. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_a(1d)			!	Intercept regression coefficient (in ms) as MT=a+b*IDe. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_b(1d)			!	Slope regression coefficient (in ms/bit) as MT=a+b*IDe. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_r(1d)			!	The Pearson coefficient of correlation. Spatial outliers excluded. [Practice trials excluded.]
+
+Fitts_TP_avg(2d)	!	Bivariate throughput for this session (in bits/s) computed as the mean of condition TP's. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_TP_inv(2d)	!	Bivariate throughput for this session (in bits/s) computed as the inverse of the slope (1/b) regression parameter. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_a(2d)			!	Intercept regression coefficient (in ms) as MT=a+b*IDe. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_b(2d)			!	Slope regression coefficient (in ms/bit) as MT=a+b*IDe. Spatial outliers excluded. [Practice trials excluded.]
+Fitts_r(2d)			!	The Pearson coefficient of correlation. Spatial outliers excluded. [Practice trials excluded.]
+
+Error_m(1d)			!	Error model slope for observed vs. predicted error rate graph as Observed=m*Predicted+b. Temporal outliers excluded. [Practice trials excluded.]
+Error_b(1d)			!	Error model intercept for observed vs. predicted error rate graph Observed=m*Predicted+b. Temporal outliers excluded. [Practice trials excluded.]
+Error_r(1d)			!	The Pearson coefficient of correlation for the error rate graph. Temporal outliers excluded. [Practice trials excluded.]
+
+Error_m(2d)			!	Error model slope for observed vs. predicted error rate graph as Observed=m*Predicted+b. Temporal outliers excluded. [Practice trials excluded.]
+Error_b(2d)			!	Error model intercept for observed vs. predicted error rate graph as Observed=m*Predicted+b. Temporal outliers excluded. [Practice trials excluded.]
+Error_r(2d)			!	The Pearson coefficient of correlation for the error rate graph. Temporal outliers excluded. [Practice trials excluded.]

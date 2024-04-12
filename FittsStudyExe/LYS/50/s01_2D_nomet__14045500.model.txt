@@ -1,0 +1,23 @@
+﻿Fitts' Law - Univariate for Subject 1
+N = 6
+MTavg = 661.6667 ms
+Error% = 0.0238
+MT(1d) = 38.8441 + 149.7779 * IDe
+TP_avg(1d) = 6.2641 bits/s
+TP_inv(1d) = 6.6766 bits/s
+a(1d) = 38.8441 ms
+b(1d) = 149.7779 ms/bit
+r(1d) = 0.9852
+
+Fitts' Law - Bivariate for Subject 1
+N = 6
+MTavg = 661.6667 ms
+Error% = 0.0238
+MT(2d) = 59.7364 + 156.211 * IDe
+TP_avg(2d) = 5.7869 bits/s
+TP_inv(2d) = 6.4016 bits/s
+a(2d) = 59.7364 ms
+b(2d) = 156.211 ms/bit
+r(2d) = 0.9849
+
+

@@ -1,0 +1,5 @@
+Distance,Width,PositionValue,ThoughtPut,Time,isClicked,isTimed,Success
+900,20,0.50,0.41,13495.00,T,F,F
+900,20,0.47,5.02,1100.00,T,T,T
+900,20,0.51,5.35,1033.00,T,T,T
+900,20,4.37,17.05,324.00,F,T,F

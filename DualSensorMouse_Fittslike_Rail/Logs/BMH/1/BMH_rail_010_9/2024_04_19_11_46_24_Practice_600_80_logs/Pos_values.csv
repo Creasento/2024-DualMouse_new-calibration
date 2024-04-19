@@ -1,0 +1,5 @@
+Distance,Width,Count,CycleRepeat,PositionValue,Success
+800,60,1,,0.10,T
+800,60,2,,-0.00,F
+800,60,3,,1.13,F
+800,60,4,,1.28,F

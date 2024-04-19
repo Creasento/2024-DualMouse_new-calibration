@@ -10,11 +10,11 @@ import java.awt.event.*;
 
 Serial sp;
 
-int Try = 1;
+int Try = 1; //name. Not value
 int testTrial = 9;
-int limitTrial = 15; //limit of trial
+int limitTrial = 45; //limit of trial
 String userName = "BMH";
-String testMode = "rail";
+String testMode = "step";
 
 //caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
 int sen1Pos = 0;
@@ -31,6 +31,16 @@ float cpi_multiplier;
 int lf = 10;
 int pointSize = 50;
 int flip = 1;
+float disP;
+
+int cycleStep = 0;
+boolean cycleStart = false;
+boolean isStepUp = false;
+boolean isStepDown = false;
+ArrayList<Float> tpAvgList = new ArrayList<>();
+float[] tpAvg = new float[1];
+
+ArrayList<Float> clickIntervals = new ArrayList<Float>();
 
 Point cursor_pos = new Point(0, 0);
 Point target = new Point(0, 0);
@@ -39,7 +49,7 @@ Point prev = new Point(0, 0);
 boolean test = false;
 boolean clicked = false;
 boolean success_prev = false;
-boolean fadeMode = true;
+boolean fadeMode = false;
 boolean visibleMode = false;
 
 int setDelay = 0;
@@ -61,10 +71,10 @@ color[] poscol = {
   color(83, 83, 83)
 };
 
-int nRepeat = 1; //each trial is D*W
-int cycle = 11; //number of circle
-int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
-int[] widths = {30, 60, 90};
+int nRepeat = 3; //each trial is D*W*nRepeat
+int cycle = 14; //number of circle
+int[] distances = {300, 900}; //radius of each circle
+int[] widths = {20, 50, 120};
 
 int current_cond = 0;
 Experiment current_exp;
@@ -122,7 +132,7 @@ void setup() {
   getMouseInfo(sp);
   setNpos(nPos);
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,CycleRepeat,PositionValue,Success");
+  Pos_Logger.println("Distance,Width,PositionValue,ThoughtPut,Time,isClicked,isTimed,Success");
   cpi_multiplier = (float)cpi / 12000;
   pos_values.add(sensor_pos /100.0);
   cursor_pos = new Point(0, 0);
@@ -133,7 +143,6 @@ void setup() {
   ellipseMode(CENTER);
   rectMode(CENTER);
 }
-
 
 void draw() {
 
@@ -184,6 +193,7 @@ void draw() {
   translate(center.x, center.y);
 
   float D = current_exp.D;
+  float W = current_exp.W;
 
   prev = new Point(0, 0);
 
@@ -203,12 +213,13 @@ void draw() {
     if (prev_target_num == i) {
       prev = new Point(round(rot_x), round(rot_y));
     }
-
-    ellipse(rot_x, rot_y, pointSize, pointSize);
+    //generate targets, if you want constant radius, replace W to pointSize
+    ellipse(rot_x, rot_y, W, W);
   }
   //circle fill green that next target
   fill(0, 255, 0);
-  ellipse(target.x, target.y, pointSize, pointSize);
+  //generate next target to green, if you want constant radius, replace W to pointSize
+  ellipse(target.x, target.y, W, W);
 
   while (sp.available() > 0) {
     String resp = sp.readStringUntil(lf);
@@ -249,7 +260,6 @@ void draw() {
         float vx = f_dx * (1.0 - CurrentPos) + r_dx * CurrentPos;
         float vy = f_dy * (1.0 - CurrentPos) + r_dy * CurrentPos;
         //old version circuit mouse
-
         //float vx =- f_dx * (1.0 - CurrentPos) + r_dx * CurrentPos;
         //float vy =- f_dy * (1.0 - CurrentPos) + r_dy * CurrentPos;
 
@@ -325,23 +335,14 @@ void draw() {
     }
   }
 
-  /*
-  stroke(250, fadeA);
-   strokeWeight(420);
-   line(sx, sy, ex, ey); //normal line (Rail)
-   stroke(225, fadeA);
-   strokeWeight(320);
-   line(sx, sy, ex, ey);
-   stroke(200, fadeA);
-   strokeWeight(220);
-   line(sx, sy, ex, ey);
-   stroke(175, fadeA);
-   strokeWeight(120);
-   line(sx, sy, ex, ey);
-   */
-  stroke(100, fadeA);
-  strokeWeight(20);
-  line(sx, sy, ex, ey);
+  float pointPosX = startX+(endX-startX)*sensor_pos/100;
+  float pointPosY = startY+(endY-startY)*sensor_pos/100;
+
+  disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
+
+  noStroke();
+  fill(255, 0, 0);
+  ellipse(pointPosX, pointPosY, 5, 5); //draw mouse point
 
   if (visibleMode) {
     stroke(0);
@@ -406,7 +407,7 @@ void draw() {
     flip = -1;
   }
 
-  senPos =senVal*flip*ratio+float(sen1Pos)/10;
+  senPos = senVal*flip*ratio+float(sen1Pos)/10;
 
   fill(25);
 
@@ -416,7 +417,7 @@ void draw() {
   text(float(sen1Pos)/10, width/2-10, -height/2+112);
   text(dirLen, width/2-10, -height/2+112+34);
   textAlign(LEFT, TOP);
-  text("Enter: drawMode", -width/2+10, -height/2+172); //+34
+  text("Enter: visibleMode", -width/2+10, -height/2+172); //+34
   text("+: gradientPlus", -width/2+10, -height/2+206); //+34
   text("-: gradientMinus", -width/2+10, -height/2+240); //+34
 
@@ -427,28 +428,50 @@ void draw() {
   popMatrix();
 }
 
-
 void Clicked() {
-
-  if (clicked != true) OnClick();
+  if (!clicked) {
+    OnClick();
+  }
   clicked = true;
 }
 
 
 void Released() {
 
-  if (clicked != false) OnRelease();
+  if (clicked != false) {
+    OnRelease();
+  }
   clicked = false;
 }
 
-
 void OnClick() {
+
+  float Dc = current_exp.D;
+  float Wc = current_exp.W;
+  float mT = 1;
+
+  if (clickIntervals.size() > 0) {
+    // 이전 클릭 시간과 현재 클릭 시간 간의 차이를 계산하여 클릭 간 시간 간격을 저장
+    float lastClickTime = clickIntervals.get(clickIntervals.size() - 1);
+    mT = (millis() - lastClickTime); // 밀리초를 초로 변환
+    clickIntervals.add((float) millis());
+  } else {
+    // 첫 번째 클릭일 경우, 현재 시간을 기록만 함
+    clickIntervals.add((float) millis());
+  }
 
   if (Main_Logger == null && setDelay == 0) {
     Main_Logger = StartLogging_Main(cond, current_cond);
   }
 
   PVector near = getNearest(Positions.get(0), Positions.get(nPos-1), toPV(target));
+
+  float IDe = log(Dc/Wc+1)/log(2); //calculate IDe and tP of test
+  float tP = IDe/mT*1000;
+  float timeLimit = IDe*1000;
+  String isClicked = "T";
+  String isTimed = "T";
+  String isSuccessed = "T";
 
   cnt++;
   cnt_trial++;
@@ -458,18 +481,37 @@ void OnClick() {
   dots.add(near);
 
   if (cnt > 1) {
-    if (senPos < 1.0 && senPos >= 0) {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + "," + String.format("%.2f", senPos) + "," + ("T");
-      Pos_Logger.println(Log);
-      Pos_Logger.flush();
+    if (disP <= Wc) {
+      isClicked = "T";
+      if (mT <= timeLimit) {
+        isTimed = "T";
+      } else {
+        isTimed = "F";
+      }
     } else {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + "," + String.format("%.2f", senPos) + "," + ("F");
-      Pos_Logger.println(Log);
-      Pos_Logger.flush();
+      isClicked = "F";
+      if (mT <= timeLimit) {
+        isTimed = "T";
+      } else {
+        isTimed = "F";
+      }
     }
+    if (isClicked == "T" && isTimed == "T") {
+      isSuccessed = "T";
+    } else {
+      isSuccessed = "F";
+    }
+    //isClicked: 클릭되었나 isTimed: 시간내에 클릭했는가, isSuccessed 그래서 최종적으로 올바른 클릭이었나
+
+    String Log = String.format("%s,%.2f,%.2f,%.2f,%s,%s,%s", current_exp.toString().replace("_", ","), senPos, tP, mT, isClicked, isTimed, isSuccessed);
+    if (isSuccessed == "T") { //만약 올바른 클릭이었을 경우, tpAvgList에 원소 추가
+      tpAvgList.add(tP);
+    }
+    Pos_Logger.println(Log);
+    Pos_Logger.flush();
   }
 
-  if (cnt > cycle) {
+  if (cnt > cycle) { //한 사이클 끝났을 때
     cnt = 0;
     StopLogging(Main_Logger);
     Main_Logger = null;
@@ -487,6 +529,43 @@ void OnClick() {
     }
 
     setDelay = int(frameRate * 0.25);
+
+    cycleStep++; //1스텝 증가, 2스텝마다 스텝 스택 초기화
+    if (cycleStep == 2) { //TP 평균 판정 및 스탭 올릴지 내릴지 결정
+      float sumTP = 0;
+      for (float value : tpAvgList) { //평균 계산
+        sumTP += value;
+      }
+      float avgTP = sumTP / tpAvgList.size();
+      if (cycleStart == false) { //첫번째 스탭. 항상 stepUp
+        cycleStart = !cycleStart;
+        isStepUp = true;
+      } else { //두번째 이후 스탭
+      
+        println(avgTP);
+        println(tpAvg[0]);
+
+        if (avgTP >= tpAvg[0]) { //이전 평균이 더 작을 경우
+          isStepUp = true; //스탭 증가
+        } else { //이전 평균이 더 클 경우
+          isStepDown = true;
+        }
+        tpAvg[0] = avgTP; //저장
+      }
+
+      if (isStepUp == true && isStepDown == false) {
+        println("stepup");
+        setPOS(sp, sensor_pos + 10); //senPos 10 증가
+        getMouseInfo(sp);
+        isStepUp = false; //isStepUp 초기화
+      } else if (isStepUp == false && isStepDown == true) {
+        println("stepdown");
+        setPOS(sp, sensor_pos - 10);
+        getMouseInfo(sp);
+        isStepDown = false; //isStepDown 초기화
+      }
+      cycleStep = 0;
+    }
   } else {
     cursor_pos.move(target.x, target.y);
     Positions.clear();
@@ -503,48 +582,37 @@ void OnRelease() {
   return;
 }
 
-
 int setCPI(Serial port, int newCPI) {
 
   port.write("s\n");
   port.clear();
-
   port.write("C" + newCPI + "\n");
   port.clear();
-
   String read = "";
-
   while (splitTokens(trim(read)).length != 2) {
     read = null;
     while (read == null) read = port.readStringUntil(lf);
   }
-
   cpi_multiplier = (float)newCPI / 12000;
 
   port.write("S\n");
   return int(splitTokens(trim(read))[0]);
 }
 
-
 int setPOS(Serial port, int newPOS) {
 
   port.write("s\n");
   port.clear();
-
   port.write("P" + newPOS + "\n");
   port.clear();
-
   String read = "";
-
-  while (splitTokens(trim(read)).length != 2) {
+  while (splitTokens(trim(read)).length < 2) {
     read = null;
     while (read == null) read = port.readStringUntil(lf);
   }
-
   port.write("S\n");
   return int(splitTokens(trim(read))[0]);
 }
-
 
 void getMouseInfo(Serial port) {
 
@@ -601,7 +669,7 @@ PrintWriter StartLogging_Pos() {
   LocalDateTime now = LocalDateTime.now();
   DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("yy.MM.dd");
   log_yy = now.format(fmt1);
-  
+
   String CurrentMode = test ? "Main" : "Practice";
   String msinfo = cpi + "_" + sensor_pos;
   String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
@@ -700,16 +768,6 @@ void keyPressed() {
   } else if (keyCode == LEFT) {
     setPOS(sp, sensor_pos - 5);
     getMouseInfo(sp);
-  } else if (key == 'M' || key == 'm') {
-    test = !test;
-  } else if (key == '>' || key == '.') {
-    nPos += 2;
-    nPos %= 10;
-    setNpos(nPos);
-  } else if (key == '<' || key == ',') {
-    nPos += 8;
-    nPos %= 10;
-    setNpos(nPos);
   } else if (key == ESC) {
     key = 0;
     StopLogging(Main_Logger);
@@ -717,10 +775,6 @@ void keyPressed() {
     exit();
   } else if (key == ENTER) {
     visibleMode = !visibleMode;
-  } else if (key == '+') {
-    val += 0.1;
-  } else if (key == '-') {
-    val -= 0.1;
   } else if (key == 'f') {
     fadeMode = !fadeMode;
   }

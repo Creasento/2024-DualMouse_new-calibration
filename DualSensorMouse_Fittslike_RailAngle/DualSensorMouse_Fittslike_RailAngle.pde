@@ -14,7 +14,7 @@ int Try = 1;
 int testTrial = 9;
 int limitTrial = 15; //limit of trial
 String userName = "BMH";
-String testMode = "rail";
+String testMode = "railAngle";
 
 //caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
 int sen1Pos = 0;
@@ -31,7 +31,7 @@ float cpi_multiplier;
 int lf = 10;
 int pointSize = 50;
 int flip = 1;
-float disP;
+float disP, disPP, disNP, cosPT, cosT, anglePT, angleT; //distance pos, distance normal pos, angle previous target, angle target
 
 Point cursor_pos = new Point(0, 0);
 Point target = new Point(0, 0);
@@ -328,14 +328,28 @@ void draw() {
 
   float pointPosX = startX+(endX-startX)*sensor_pos/100;
   float pointPosY = startY+(endY-startY)*sensor_pos/100;
+  float norPosX = sx+(ex-sx)*sensor_pos/100;
+  float norPosY = sy+(ey-sy)*sensor_pos/100;
   
+  disPP = dist(pointPosX, pointPosY, prev.x, prev.y); //distance of cursor-prev.target
   disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
+  disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target
+  cosPT = disNP/disPP;
+  anglePT = degrees(asin(cosPT));
+  //angeT = ;
 
   stroke(100, fadeA);
   strokeWeight(20);
   line(sx, sy, ex, ey);
 
   if (visibleMode) {
+    stroke(255, 255, 0);
+    strokeWeight(2);
+    line(pointPosX, pointPosY, target.x, target.y); //현재 커서(senPos)와 이전 타겟간의 거리
+    stroke(0, 255, 255);
+    strokeWeight(2);
+    line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 거리
+    
     stroke(0, 0, 255);
     strokeWeight(2);
     line(prev.x, prev.y, target.x, target.y); //line of each targets (prev+target)
@@ -368,6 +382,7 @@ void draw() {
     strokeWeight(2); //normal line (Rail)
     line(sx, sy, startX, startY);
     line(ex, ey, endX, endY);
+    line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
 
     for (PVector p : dots) {
       //after click
@@ -407,6 +422,7 @@ void draw() {
   text(senPos, width/2-10, -height/2+78); //+34
   text(float(sen1Pos)/10, width/2-10, -height/2+112);
   text(dirLen, width/2-10, -height/2+112+34);
+  text(anglePT, width/2-10, -height/2+112+68);
   textAlign(LEFT, TOP);
   text("Enter: drawMode", -width/2+10, -height/2+172); //+34
   text("+: gradientPlus", -width/2+10, -height/2+206); //+34
@@ -489,12 +505,10 @@ void OnClick() {
   }
 }
 
-
 void OnRelease() {
 
   return;
 }
-
 
 int setCPI(Serial port, int newCPI) {
 
@@ -517,18 +531,14 @@ int setCPI(Serial port, int newCPI) {
   return int(splitTokens(trim(read))[0]);
 }
 
-
 int setPOS(Serial port, int newPOS) {
 
   port.write("s\n");
   port.clear();
-
   port.write("P" + newPOS + "\n");
   port.clear();
-
   String read = "";
-
-  while (splitTokens(trim(read)).length != 2) {
+  while (splitTokens(trim(read)).length < 2) {
     read = null;
     while (read == null) read = port.readStringUntil(lf);
   }
@@ -536,7 +546,6 @@ int setPOS(Serial port, int newPOS) {
   port.write("S\n");
   return int(splitTokens(trim(read))[0]);
 }
-
 
 void getMouseInfo(Serial port) {
 
@@ -565,7 +574,6 @@ void getMouseInfo(Serial port) {
   port.clear();
   port.write("S/n");
 }
-
 
 void setNpos(int nPos) {
 

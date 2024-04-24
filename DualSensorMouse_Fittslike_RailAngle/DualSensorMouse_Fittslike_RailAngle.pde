@@ -21,6 +21,7 @@ int sen1Pos = 0;
 int sen2Pos = 10;
 
 String testType = "" + sen1Pos + sen2Pos;
+String trialSuccess = "F";
 
 String mouse_info;
 int cpi;
@@ -32,6 +33,8 @@ int lf = 10;
 int pointSize = 50;
 int flip = 1;
 float disP, disPP, disNP, cosPT, cosT, anglePT, angleT; //distance pos, distance normal pos, angle previous target, angle target
+
+float[] angleL = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //angle list
 
 Point cursor_pos = new Point(0, 0);
 Point target = new Point(0, 0);
@@ -123,7 +126,7 @@ void setup() {
   getMouseInfo(sp);
   setNpos(nPos);
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,CycleRepeat,PositionValue,Success");
+  Pos_Logger.println("Distance,Width,Count,PositionValue,Success");
   cpi_multiplier = (float)cpi / 12000;
   pos_values.add(sensor_pos /100.0);
   cursor_pos = new Point(0, 0);
@@ -134,7 +137,6 @@ void setup() {
   ellipseMode(CENTER);
   rectMode(CENTER);
 }
-
 
 void draw() {
 
@@ -330,13 +332,14 @@ void draw() {
   float pointPosY = startY+(endY-startY)*sensor_pos/100;
   float norPosX = sx+(ex-sx)*sensor_pos/100;
   float norPosY = sy+(ey-sy)*sensor_pos/100;
-  
+
   disPP = dist(pointPosX, pointPosY, prev.x, prev.y); //distance of cursor-prev.target
   disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
   disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target
   cosPT = disNP/disPP;
   anglePT = degrees(asin(cosPT));
-  //angeT = ;
+
+
 
   stroke(100, fadeA);
   strokeWeight(20);
@@ -349,7 +352,7 @@ void draw() {
     stroke(0, 255, 255);
     strokeWeight(2);
     line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 거리
-    
+
     stroke(0, 0, 255);
     strokeWeight(2);
     line(prev.x, prev.y, target.x, target.y); //line of each targets (prev+target)
@@ -383,6 +386,14 @@ void draw() {
     line(sx, sy, startX, startY);
     line(ex, ey, endX, endY);
     line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
+
+    noStroke();
+    fill(0, 0, 255); //blue point was left on screen(click point)
+    for (int i = 1; i < 10; i++) {
+      float PPx = lerp(prev.x, target.x, i / 10.0); // x 좌표를 계산
+      float PPy = lerp(prev.y, target.y, i / 10.0); // y 좌표를 계산
+      ellipse(PPx, PPy, 10, 10); //sensor start
+    }
 
     for (PVector p : dots) {
       //after click
@@ -467,14 +478,13 @@ void OnClick() {
 
   if (cnt > 1) {
     if (senPos < 1.0 && senPos >= 0) {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + "," + String.format("%.2f", senPos) + "," + ("T");
-      Pos_Logger.println(Log);
-      Pos_Logger.flush();
+      trialSuccess = "T";
     } else {
-      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + "," + String.format("%.2f", senPos) + "," + ("F");
-      Pos_Logger.println(Log);
-      Pos_Logger.flush();
+      trialSuccess = "F";
     }
+    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess;
+    Pos_Logger.println(Log);
+    Pos_Logger.flush();
   }
 
   if (cnt > cycle) {

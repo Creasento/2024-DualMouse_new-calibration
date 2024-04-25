@@ -32,7 +32,7 @@ float cpi_multiplier;
 int lf = 10;
 int pointSize = 50;
 int flip = 1;
-float disP, disPP, disNP, cosPT, cosT, anglePT, angleT; //distance pos, distance normal pos, angle previous target, angle target
+float disP, disPP, disNP, disPreN, cosPT, cosT, anglePT, angleT; //distance pos, distance normal pos, angle previous target, angle target
 
 float[] angleL = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //angle list
 
@@ -126,7 +126,7 @@ void setup() {
   getMouseInfo(sp);
   setNpos(nPos);
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,PositionValue,Success");
+  Pos_Logger.println("Distance,Width,Count,PositionValue,Success,Angle0,Angle1,Angle2,Angle3,Angle4,Angle5,Angle6,Angle7,Angle8,Angle9");
   cpi_multiplier = (float)cpi / 12000;
   pos_values.add(sensor_pos /100.0);
   cursor_pos = new Point(0, 0);
@@ -336,10 +336,41 @@ void draw() {
   disPP = dist(pointPosX, pointPosY, prev.x, prev.y); //distance of cursor-prev.target
   disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
   disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target
+  disPreN = dist(norPosX, norPosY, prev.x, prev.y); //distance of normal cursor-prev,target
   cosPT = disNP/disPP;
   anglePT = degrees(asin(cosPT));
 
-
+  if (disPreN >= 0 && disPreN < dirLen/10) { //save each step in angleL
+    angleL[0] = anglePT;
+    print("0");
+  } else if (disPreN >= dirLen/10 && disPreN < dirLen/5) {
+    angleL[1] = anglePT;
+    print("1");
+  } else if (disPreN >= dirLen/5 && disPreN < dirLen*3/10) {
+    angleL[2] = anglePT;
+    print("2");
+  } else if (disPreN >= dirLen*3/10 && disPreN < dirLen*2/5) {
+    angleL[3] = anglePT;
+    print("3");
+  } else if (disPreN >= dirLen*2/5 && disPreN < dirLen/2) {
+    angleL[4] = anglePT;
+    print("4");
+  } else if (disPreN >= dirLen/2 && disPreN < dirLen*3/5) {
+    angleL[5] = anglePT;
+    print("5");
+  } else if (disPreN >= dirLen*3/5 && disPreN < dirLen*7/10) {
+    angleL[6] = anglePT;
+    print("6");
+  } else if (disPreN >= dirLen*7/10 && disPreN < dirLen*4/5) {
+    angleL[7] = anglePT;
+    print("7");
+  } else if (disPreN >= dirLen*9/10 && disPreN < dirLen) {
+    angleL[8] = anglePT;
+    print("8");
+  } else if (disPreN >= dirLen) {
+    angleL[9] = anglePT;
+    print("9");
+  }
 
   stroke(100, fadeA);
   strokeWeight(20);
@@ -348,10 +379,10 @@ void draw() {
   if (visibleMode) {
     stroke(255, 255, 0);
     strokeWeight(2);
-    line(pointPosX, pointPosY, target.x, target.y); //현재 커서(senPos)와 이전 타겟간의 거리
+    line(pointPosX, pointPosY, target.x, target.y); //현재 커서(senPos)와 이전 타겟간의 직선
     stroke(0, 255, 255);
     strokeWeight(2);
-    line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 거리
+    line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 직선
 
     stroke(0, 0, 255);
     strokeWeight(2);
@@ -378,7 +409,7 @@ void draw() {
     fill(0, 0, 255); //blue point was left on screen(click point)
     ellipse(sx, sy, 15, 15); //sensor start
     noStroke();
-    fill(255, 0, 0);
+    fill(255, 0, 0); //red point was right on screen
     ellipse(ex, ey, 15, 15); //sensor end
 
     stroke(255, 0, 0);
@@ -388,11 +419,16 @@ void draw() {
     line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
 
     noStroke();
+    fill(0, 255, 255);
+    ellipse(norPosX, norPosY, 10, 10);
+
+    noStroke();
     fill(0, 0, 255); //blue point was left on screen(click point)
     for (int i = 1; i < 10; i++) {
-      float PPx = lerp(prev.x, target.x, i / 10.0); // x 좌표를 계산
-      float PPy = lerp(prev.y, target.y, i / 10.0); // y 좌표를 계산
-      ellipse(PPx, PPy, 10, 10); //sensor start
+      float t = i / 10.0;
+      float PPx = lerp(prev.x, target.x, t); // x 좌표를 계산
+      float PPy = lerp(prev.y, target.y, t); // y 좌표를 계산
+      ellipse(PPx, PPy, 10, 10); //draw
     }
 
     for (PVector p : dots) {
@@ -462,13 +498,18 @@ void Released() {
 
 
 void OnClick() {
-
   if (Main_Logger == null && setDelay == 0) {
     Main_Logger = StartLogging_Main(cond, current_cond);
   }
+  String resultA = "";
+  for (int i = 0; i < angleL.length; i++) {
+    resultA += angleL[i]; // 현재 요소를 문자열로 변환하여 result에 추가합니다.
+    if (i < angleL.length - 1) { // 마지막 요소가 아니라면 쉼표를 추가합니다.
+      resultA += ",";
+    }
+  }
 
   PVector near = getNearest(Positions.get(0), Positions.get(nPos-1), toPV(target));
-
   cnt++;
   cnt_trial++;
   success_prev = dist(near.x, near.y, target.x, target.y) <= current_exp.W/2;
@@ -482,7 +523,7 @@ void OnClick() {
     } else {
       trialSuccess = "F";
     }
-    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess;
+    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultA;
     Pos_Logger.println(Log);
     Pos_Logger.flush();
   }
@@ -516,7 +557,9 @@ void OnClick() {
 }
 
 void OnRelease() {
-
+  for (int i = 0; i < angleL.length; i++) {
+    angleL[i] = 0;
+  }
   return;
 }
 

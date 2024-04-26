@@ -32,7 +32,8 @@ float cpi_multiplier;
 int lf = 10;
 int pointSize = 50;
 int flip = 1;
-float disP, disPP, disNP, disPreN, cosPT, cosT, anglePT, angleT; //distance pos, distance normal pos, angle previous target, angle target
+float angleFlip = 1;
+float disP, disPP, disNP, disPreN, sinPT, anglePT; //distance pos, distance normal pos, angle previous target, angle target
 
 float[] angleL = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //angle list
 
@@ -292,6 +293,17 @@ void draw() {
   float slopeValueY = prev.y-target.y;
   float sx, sy, ex, ey, slopeRail;
 
+  float xFlip = endX-startX;
+  float cFlip = pointCX-startX;
+  float senDist = dist(startX, startY, pointCX, pointCY);
+  float senVal = senDist/lineLength;
+
+  if (xFlip > 0 && cFlip > 0 || xFlip < 0 && cFlip < 0) {
+    flip = 1;
+  } else {
+    flip = -1;
+  }
+
   if (slopeValueX == 0) { //target line is vertical
     sx = target.x;
     ex = target.x;
@@ -328,46 +340,57 @@ void draw() {
     }
   }
 
-  float pointPosX = startX+(endX-startX)*sensor_pos/100;
+  float pointPosX = startX+(endX-startX)*sensor_pos/100; //점에 대해서 각도 값 계산
   float pointPosY = startY+(endY-startY)*sensor_pos/100;
+
   float norPosX = sx+(ex-sx)*sensor_pos/100;
   float norPosY = sy+(ey-sy)*sensor_pos/100;
+
+  float vectorPP_x = prev.x - pointPosX;
+  float vectorPP_y = prev.y - pointPosY;
+  float magSquared = vectorPP_x * vectorPP_x + vectorPP_y * vectorPP_y;
+  float magPP = sqrt(magSquared);
+
+  if (vectorPP_x < 0) {
+    magPP = -magPP;
+  }
 
   disPP = dist(pointPosX, pointPosY, prev.x, prev.y); //distance of cursor-prev.target
   disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
   disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target
   disPreN = dist(norPosX, norPosY, prev.x, prev.y); //distance of normal cursor-prev,target
-  cosPT = disNP/disPP;
-  anglePT = degrees(asin(cosPT));
 
-  if (disPreN >= 0 && disPreN < dirLen/10) { //save each step in angleL
+  sinPT = disNP/magPP;
+  anglePT = degrees(asin(sinPT));
+
+  if (disPreN >= 0 && disPreN < tarLen/10) { //save each step in angleL
     angleL[0] = anglePT;
     print("0");
-  } else if (disPreN >= dirLen/10 && disPreN < dirLen/5) {
+  } else if (disPreN >= tarLen/10 && disPreN < tarLen/5) {
     angleL[1] = anglePT;
     print("1");
-  } else if (disPreN >= dirLen/5 && disPreN < dirLen*3/10) {
+  } else if (disPreN >= tarLen/5 && disPreN < tarLen*3/10) {
     angleL[2] = anglePT;
     print("2");
-  } else if (disPreN >= dirLen*3/10 && disPreN < dirLen*2/5) {
+  } else if (disPreN >= tarLen*3/10 && disPreN < tarLen*2/5) {
     angleL[3] = anglePT;
     print("3");
-  } else if (disPreN >= dirLen*2/5 && disPreN < dirLen/2) {
+  } else if (disPreN >= tarLen*2/5 && disPreN < tarLen/2) {
     angleL[4] = anglePT;
     print("4");
-  } else if (disPreN >= dirLen/2 && disPreN < dirLen*3/5) {
+  } else if (disPreN >= tarLen/2 && disPreN < tarLen*3/5) {
     angleL[5] = anglePT;
     print("5");
-  } else if (disPreN >= dirLen*3/5 && disPreN < dirLen*7/10) {
+  } else if (disPreN >= tarLen*3/5 && disPreN < tarLen*7/10) {
     angleL[6] = anglePT;
     print("6");
-  } else if (disPreN >= dirLen*7/10 && disPreN < dirLen*4/5) {
+  } else if (disPreN >= tarLen*7/10 && disPreN < tarLen*4/5) {
     angleL[7] = anglePT;
     print("7");
-  } else if (disPreN >= dirLen*9/10 && disPreN < dirLen) {
+  } else if (disPreN >= tarLen*9/10 && disPreN < tarLen) {
     angleL[8] = anglePT;
     print("8");
-  } else if (disPreN >= dirLen) {
+  } else if (disPreN >= tarLen) {
     angleL[9] = anglePT;
     print("9");
   }
@@ -447,17 +470,6 @@ void draw() {
     if (visibleMode) {
       ellipse(CurrentPoint.x, CurrentPoint.y, 5, 5); //sensor circle
     }
-  }
-
-  float xFlip = endX-startX;
-  float cFlip = pointCX-startX;
-  float senDist = dist(startX, startY, pointCX, pointCY);
-  float senVal = senDist/lineLength;
-
-  if (xFlip > 0 && cFlip > 0 || xFlip < 0 && cFlip < 0) {
-    flip = 1;
-  } else {
-    flip = -1;
   }
 
   senPos =senVal*flip*ratio+float(sen1Pos)/10;

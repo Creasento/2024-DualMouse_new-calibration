@@ -580,7 +580,7 @@ void OnClick() {
   if (success_prev) cnt_success++;
   dots.add(near);
 
-  setPOS(sp, (sensor_pos*9 + int(senPosDis))/10);
+  setPOS(sp, (sensor_pos*9 + int(senPosDis))/10); //센서포지션의 변화 비율. 현재는 1:9
   getMouseInfo(sp);
 
   if (cnt > 1) {

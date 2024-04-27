@@ -10,19 +10,6 @@ import java.awt.event.*;
 
 Serial sp;
 
-int Try = 1;
-int testTrial = 9;
-int limitTrial = 15; //limit of trial
-String userName = "BMH";
-String testMode = "railAngle";
-
-//caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
-int sen1Pos = 0;
-int sen2Pos = 10;
-
-String testType = "" + sen1Pos + sen2Pos;
-String trialSuccess = "F";
-
 String mouse_info;
 int cpi;
 int sensor_pos;
@@ -31,11 +18,6 @@ int def_pos = 0;
 float cpi_multiplier;
 int lf = 10;
 int pointSize = 50;
-int flip = 1;
-float angleFlip = 1;
-float disP, disPP, disNP, disPreN, sinPT, anglePT; //distance pos, distance normal pos, angle previous target, angle target
-
-float[] angleL = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //angle list
 
 Point cursor_pos = new Point(0, 0);
 Point target = new Point(0, 0);
@@ -50,7 +32,7 @@ boolean visibleMode = false;
 int setDelay = 0;
 int frameRate = 75;
 
-int nPos = 11;
+int nPos = 10;
 int[] pos = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
 color[] poscol = {
   color(0, 0, 255),
@@ -62,11 +44,10 @@ color[] poscol = {
   color(0, 127, 0),
   color(127, 127, 0),
   color(0, 127, 127),
-  color(83, 83, 83),
   color(83, 83, 83)
 };
 
-int nRepeat = 1; //each trial is D*W
+int nRepeat = 2; //each trial is 15
 int cycle = 11; //number of circle
 int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
 int[] widths = {30, 60, 90};
@@ -81,7 +62,6 @@ int cnt_success = 0;
 PrintWriter Main_Logger;
 PrintWriter Pos_Logger;
 String log_id = "";
-String log_yy = "";
 
 ArrayList<Experiment> cond = new ArrayList<Experiment>();
 ArrayList<PVector> dots = new ArrayList<PVector>();
@@ -90,11 +70,13 @@ ArrayList<Float> pos_values = new ArrayList<Float>();
 
 float val = 0.5;
 float fadeA = 100;
-
-float senPos;
-float ratio = float(sen2Pos-sen1Pos)/10;
+//caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 9)
+int sen1Pos = 3;
+int sen2Pos = 9;
+float senPos = (sen2Pos+sen1Pos)/20;
 
 void setup() {
+
   LocalDateTime now = LocalDateTime.now();
   DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
   log_id = now.format(fmt);
@@ -102,9 +84,7 @@ void setup() {
   for (int i = 0; i < nRepeat; i++) {
     for (int D : distances) {
       for (int W : widths) {
-        if (cond.size() < limitTrial) {
-          cond.add(new Experiment(D, W));
-        }
+        cond.add(new Experiment(D, W));
       }
     }
   }
@@ -120,35 +100,59 @@ void setup() {
   current_exp = cond.get(current_cond);
 
   printArray(Serial.list());
-  sp = new Serial(this, "COM4", 115200);
+  String portName = Serial.list()[Serial.list().length - 1];
+  portName = "/dev/cu.usbmodemHIDHE1";
+
+  sp = new Serial(this, "COM6", 115200);
   sp.clear();
+
+
+  println("READY");
+
+
   if (def_cpi != 0) setCPI(sp, def_cpi);
   if (def_pos != 0) setPOS(sp, def_pos);
+
   getMouseInfo(sp);
   setNpos(nPos);
+
+
+  println("READY");
+
+
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,PositionValue,Success,Angle0,Angle1,Angle2,Angle3,Angle4,Angle5,Angle6,Angle7,Angle8,Angle9");
+  Pos_Logger.println("Distance,Width,Count,PositionValue,Success");
+
   cpi_multiplier = (float)cpi / 12000;
+
   pos_values.add(sensor_pos /100.0);
+
   cursor_pos = new Point(0, 0);
+
   fullScreen();
   //frameRate(frameRate);
   noCursor();
+
   textSize(24);
   ellipseMode(CENTER);
   rectMode(CENTER);
+
+  println("READY");
 }
+
 
 void draw() {
 
   if (setDelay > 0) {
     background(30);
+
     if (cnt_trial == 0) {
       textAlign(CENTER, CENTER);
       text("READY", width/2, height/2 - 20);
       text(setDelay/frameRate + 1, width/2, height/2 + 20);
       text("Current Mode | " + (test ? "Test" : "Practice"), width/2, height - 30);
     }
+
     setDelay--;
     return;
   }
@@ -188,6 +192,7 @@ void draw() {
   translate(center.x, center.y);
 
   float D = current_exp.D;
+  float W = current_exp.W;
 
   prev = new Point(0, 0);
 
@@ -213,6 +218,14 @@ void draw() {
   //circle fill green that next target
   fill(0, 255, 0);
   ellipse(target.x, target.y, pointSize, pointSize);
+
+  //when click wrong, circle turn red
+  /*
+  if (!success_prev && cnt != 0 && !test) {
+   fill(255, 0, 0);
+   ellipse(prev.x, prev.y, pointSize, pointSize);
+   }
+   */
 
   while (sp.available() > 0) {
     String resp = sp.readStringUntil(lf);
@@ -265,7 +278,10 @@ void draw() {
       }
     }
   }
+
   cursor_pos.move(constrain(cursor_pos.x, -width/2, width/2), constrain(cursor_pos.y, -height/2, height/2));
+
+  // gradiant mode
 
   float startX = Positions.get(sen1Pos).x;
   float startY = Positions.get(sen1Pos).y;
@@ -277,7 +293,13 @@ void draw() {
   float centerY = (startY + endY) / 2;
   float radius = lineLength / 2;
 
-  float slope = (endY - startY) / (endX - startX);
+  //gradient radius of each steps
+  float x1 = val*3;
+  float x2 = val*4;
+  float x3 = val*5;
+  float x4 = val*6;
+
+  float slope = (float)(endY - startY) / (endX - startX);
   float yIntercept = startY - slope *  startX;
   float xLeft, xRight, yLeft, yRight;
   float normalSlope = -1 / slope;
@@ -287,166 +309,73 @@ void draw() {
   float pointCX = intersectionX;
   float pointCY = intersectionY;
   float tarLen = dist(prev.x, prev.y, target.x, target.y);
-  float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
-
-  float slopeValueX = prev.x-target.x;
-  float slopeValueY = prev.y-target.y;
-  float sx, sy, ex, ey, slopeRail;
-
-  float xFlip = endX-startX;
-  float cFlip = pointCX-startX;
-  float senDist = dist(startX, startY, pointCX, pointCY);
-  float senVal = senDist/lineLength;
-
-  if (xFlip > 0 && cFlip > 0 || xFlip < 0 && cFlip < 0) {
-    flip = 1;
-  } else {
-    flip = -1;
-  }
-
-  if (slopeValueX == 0) { //target line is vertical
-    sx = target.x;
-    ex = target.x;
-    sy = startY;
-    ey = endY;
-  } else if (slopeValueY == 0) { //target line is horizental
-    sx = startX;
-    ex = endX;
-    sy = target.y;
-    ey = target.y;
-  } else {
-    slopeRail = slopeValueY/slopeValueX;
-    sx = (slopeRail*prev.x+1/slopeRail*startX+startY-prev.y)/(slopeRail+1/slopeRail);
-    ex = (slopeRail*prev.x+1/slopeRail*endX+endY-prev.y)/(slopeRail+1/slopeRail);
-    sy = slopeRail*(sx-prev.x)+prev.y;
-    ey = slopeRail*(ex-prev.x)+prev.y;
-  }
 
   xRight = -width;
   xLeft = width;
   yRight = slope * xRight + yIntercept;
   yLeft = slope * xLeft + yIntercept;
 
-  if (fadeMode == true) {
-    float lenRails = dist(sx, sy, target.x, target.y);
-    float lenRaile = dist(ex, ey, target.x, target.y);
-    float lenRailmin = Math.min(lenRails, lenRaile);
+  float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
 
-    if (lenRailmin <= tarLen/4) {
-      fadeA = 0;
-    } else {
-      fadeA = map(lenRailmin, tarLen/4, tarLen/2, 0, 100);
-      fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
-    }
+  if (abs(dirLen) < abs(tarLen/5)) {
+    fadeA = 0;
+  } else {
+    // Update fadeA based on the distance between the center of cursor and target
+    fadeA = map(dirLen, tarLen/5, tarLen/2, 0, 100);
+    fadeA = constrain(fadeA, 0, 100); // Ensuring fadeA stays within the range [0, 100]
   }
 
-  float pointPosX = startX+(endX-startX)*sensor_pos/100; //점에 대해서 각도 값 계산
-  float pointPosY = startY+(endY-startY)*sensor_pos/100;
-
-  float norPosX = sx+(ex-sx)*sensor_pos/100;
-  float norPosY = sy+(ey-sy)*sensor_pos/100;
-
-  float vectorPP_x = prev.x - pointPosX;
-  float vectorPP_y = prev.y - pointPosY;
-  float magSquared = vectorPP_x * vectorPP_x + vectorPP_y * vectorPP_y;
-  float magPP = sqrt(magSquared);
-
-  if (vectorPP_x < 0) {
-    magPP = -magPP;
+  if (fadeMode == false) {
+    //draw gradient
+    noStroke();
+    fill(250, 100);
+    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
+    noStroke();
+    fill(225, 100);
+    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
+    noStroke();
+    fill(200, 100);
+    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
+    noStroke();
+    fill(175, 100);
+    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
+    noStroke();
+    fill(100, 100);
+    ellipse(centerX, centerY, lineLength, lineLength);
+  } else {
+    noStroke();
+    fill(250, fadeA);
+    ellipse(centerX, centerY, lineLength*x4, lineLength*x4);
+    noStroke();
+    fill(225, fadeA);
+    ellipse(centerX, centerY, lineLength*x3, lineLength*x3);
+    noStroke();
+    fill(200, fadeA);
+    ellipse(centerX, centerY, lineLength*x2, lineLength*x2);
+    noStroke();
+    fill(175, fadeA);
+    ellipse(centerX, centerY, lineLength*x1, lineLength*x1);
+    noStroke();
+    fill(100, fadeA);
+    ellipse(centerX, centerY, lineLength, lineLength);
   }
-
-  disPP = dist(pointPosX, pointPosY, prev.x, prev.y); //distance of cursor-prev.target
-  disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
-  disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target
-  disPreN = dist(norPosX, norPosY, prev.x, prev.y); //distance of normal cursor-prev,target
-
-  sinPT = disNP/magPP;
-  anglePT = degrees(asin(sinPT));
-
-  if (disPreN >= 0 && disPreN < tarLen/10) { //save each step in angleL
-    angleL[0] = anglePT;
-  } else if (disPreN >= tarLen/10 && disPreN < tarLen/5) {
-    angleL[1] = anglePT;
-  } else if (disPreN >= tarLen/5 && disPreN < tarLen*3/10) {
-    angleL[2] = anglePT;
-  } else if (disPreN >= tarLen*3/10 && disPreN < tarLen*2/5) {
-    angleL[3] = anglePT;
-  } else if (disPreN >= tarLen*2/5 && disPreN < tarLen/2) {
-    angleL[4] = anglePT;
-  } else if (disPreN >= tarLen/2 && disPreN < tarLen*3/5) {
-    angleL[5] = anglePT;
-  } else if (disPreN >= tarLen*3/5 && disPreN < tarLen*7/10) {
-    angleL[6] = anglePT;
-  } else if (disPreN >= tarLen*7/10 && disPreN < tarLen*4/5) {
-    angleL[7] = anglePT;
-  } else if (disPreN >= tarLen*9/10 && disPreN < tarLen) {
-    angleL[8] = anglePT;
-  } else if (disPreN >= tarLen) {
-    angleL[9] = anglePT;
-  }
-
-  stroke(100, fadeA);
-  strokeWeight(20);
-  line(sx, sy, ex, ey);
 
   if (visibleMode) {
-    stroke(255, 255, 0);
-    strokeWeight(2);
-    line(pointPosX, pointPosY, target.x, target.y); //현재 커서(senPos)와 이전 타겟간의 직선
-    stroke(0, 255, 255);
-    strokeWeight(2);
-    line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 직선
-
-    stroke(0, 0, 255);
-    strokeWeight(2);
-    line(prev.x, prev.y, target.x, target.y); //line of each targets (prev+target)
-
     stroke(0);
     strokeWeight(2);
     line(xLeft, yLeft, xRight, yRight); //horizental line
-
     noFill();
     stroke(255, 0, 0);
     strokeWeight(2);
     line(startX, startY, endX, endY); //sensor line
-
     stroke(0, 255, 0);
     strokeWeight(2);
     line(target.x, target.y, intersectionX, intersectionY); //normal vector line
-
     stroke(0);
     strokeWeight(2);
     line(centerX, centerY, target.x, target.y); //line that distance middle of point-middle of the pointer @
-
-    noStroke();
-    fill(0, 0, 255); //blue point was left on screen(click point)
-    ellipse(sx, sy, 15, 15); //sensor start
-    noStroke();
-    fill(255, 0, 0); //red point was right on screen
-    ellipse(ex, ey, 15, 15); //sensor end
-
-    stroke(255, 0, 0);
-    strokeWeight(2); //normal line (Rail)
-    line(sx, sy, startX, startY);
-    line(ex, ey, endX, endY);
-    line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
-
-    noStroke();
-    fill(0, 255, 255);
-    ellipse(norPosX, norPosY, 10, 10);
-
-    noStroke();
-    fill(0, 0, 255); //blue point was left on screen(click point)
-    for (int i = 1; i < 10; i++) {
-      float t = i / 10.0;
-      float PPx = lerp(prev.x, target.x, t); // x 좌표를 계산
-      float PPy = lerp(prev.y, target.y, t); // y 좌표를 계산
-      ellipse(PPx, PPy, 10, 10); //draw
-    }
-
     for (PVector p : dots) {
       //after click
-      noStroke();
       fill(0, 0, 255); //blue point was left on screen(click point)
       ellipse(p.x, p.y, 5, 5);
     }
@@ -462,16 +391,26 @@ void draw() {
     }
   }
 
-  senPos =senVal*flip*ratio+float(sen1Pos)/10;
+  float xFlip = endX-startX;
+  float cFlip = pointCX-startX;
+  int flip = 1;
+  float senDist = dist(startX, startY, pointCX, pointCY);
+  float senVal = senDist/lineLength;
+
+  if (xFlip > 0 && cFlip > 0 || xFlip < 0 && cFlip < 0) {
+    flip = 1;
+  } else {
+    flip = -1;
+  }
+  senPos = senVal*flip;
 
   fill(25);
 
   //TEXT
   textAlign(RIGHT, TOP);
   text(senPos, width/2-10, -height/2+78); //+34
-  text(float(sen1Pos)/10, width/2-10, -height/2+112);
+  text(fadeA, width/2-10, -height/2+112);
   text(dirLen, width/2-10, -height/2+112+34);
-  text(anglePT, width/2-10, -height/2+112+68);
   textAlign(LEFT, TOP);
   text("Enter: drawMode", -width/2+10, -height/2+172); //+34
   text("+: gradientPlus", -width/2+10, -height/2+206); //+34
@@ -500,18 +439,13 @@ void Released() {
 
 
 void OnClick() {
+
   if (Main_Logger == null && setDelay == 0) {
     Main_Logger = StartLogging_Main(cond, current_cond);
   }
-  String resultA = "";
-  for (int i = 0; i < angleL.length; i++) {
-    resultA += angleL[i]; // 현재 요소를 문자열로 변환하여 result에 추가합니다.
-    if (i < angleL.length - 1) { // 마지막 요소가 아니라면 쉼표를 추가합니다.
-      resultA += ",";
-    }
-  }
 
   PVector near = getNearest(Positions.get(0), Positions.get(nPos-1), toPV(target));
+
   cnt++;
   cnt_trial++;
   success_prev = dist(near.x, near.y, target.x, target.y) <= current_exp.W/2;
@@ -520,14 +454,15 @@ void OnClick() {
   dots.add(near);
 
   if (cnt > 1) {
-    if (senPos < 1.0 && senPos >= 0) {
-      trialSuccess = "T";
+    if (abs(senPos) < 1.5) {
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("T");
+      Pos_Logger.println(Log);
+      Pos_Logger.flush();
     } else {
-      trialSuccess = "F";
+      String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + ("F");
+      Pos_Logger.println(Log);
+      Pos_Logger.flush();
     }
-    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultA;
-    Pos_Logger.println(Log);
-    Pos_Logger.flush();
   }
 
   if (cnt > cycle) {
@@ -558,12 +493,12 @@ void OnClick() {
   }
 }
 
+
 void OnRelease() {
-  for (int i = 0; i < angleL.length; i++) {
-    angleL[i] = 0;
-  }
+
   return;
 }
+
 
 int setCPI(Serial port, int newCPI) {
 
@@ -586,14 +521,18 @@ int setCPI(Serial port, int newCPI) {
   return int(splitTokens(trim(read))[0]);
 }
 
+
 int setPOS(Serial port, int newPOS) {
 
   port.write("s\n");
   port.clear();
+
   port.write("P" + newPOS + "\n");
   port.clear();
+
   String read = "";
-  while (splitTokens(trim(read)).length < 2) {
+
+  while (splitTokens(trim(read)).length != 2) {
     read = null;
     while (read == null) read = port.readStringUntil(lf);
   }
@@ -601,6 +540,7 @@ int setPOS(Serial port, int newPOS) {
   port.write("S\n");
   return int(splitTokens(trim(read))[0]);
 }
+
 
 void getMouseInfo(Serial port) {
 
@@ -630,6 +570,7 @@ void getMouseInfo(Serial port) {
   port.write("S/n");
 }
 
+
 void setNpos(int nPos) {
 
   if (nPos == 1) {
@@ -651,54 +592,31 @@ void setNpos(int nPos) {
   cursor_pos.move(0, 0);
 }
 
-PrintWriter StartLogging_Pos() {
 
-  LocalDateTime now = LocalDateTime.now();
-  DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("yy.MM.dd");
-  log_yy = now.format(fmt1);
+PrintWriter StartLogging_Pos() {
 
   String CurrentMode = test ? "Main" : "Practice";
   String msinfo = cpi + "_" + sensor_pos;
-  String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
-  boolean folderExist = new File("./Logs/" + folderName).exists();
-  println(folderExist);
-  println("./Logs/" + folderName);
-  while (folderExist) {
-    testTrial++;
-    folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
-    if (testTrial > 1000) {
-      println("Error: Cannot create a new folder. Too many attempts.");
-      break;
-    }
-  }
-  String LogName = "./Logs/" + userName + "/" + Try + "/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_logs/Pos_values.csv";
+  String LogName = "./Logs/" + log_id + "_" + CurrentMode + "_" + msinfo + "_logs/Pos_values.csv";
+
   PrintWriter pw = createWriter(LogName);
   return pw;
 }
 
-PrintWriter StartLogging_Main(ArrayList<Experiment> conditions, int cond_num) {
 
-  LocalDateTime now = LocalDateTime.now();
-  DateTimeFormatter fmt1 = DateTimeFormatter.ofPattern("yy.MM.dd");
-  log_yy = now.format(fmt1);
+PrintWriter StartLogging_Main(ArrayList<Experiment> conditions, int cond_num) {
 
   Experiment exp = conditions.get(cond_num);
   String CurrentMode = test ? "Main" : "Practice";
   String msinfo = cpi + "_" + sensor_pos;
-  String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
-  while (new File("./Logs/" + folderName).exists()) {
-    testTrial++;
-    folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
-    if (testTrial > 1000) {
-      println("Error: Cannot create a new folder. Too many attempts.");
-      break;
-    }
-  }
-  String logName = "./Logs/" + userName + "/" + Try + "/" + folderName + "/" + log_id + "_" + CurrentMode + "_" + msinfo + "_" + "logs/" + exp + "_" + (cond_num + 1) + ".log";
+
+  String logName = "./Logs/" + log_id + "_" + CurrentMode + "_" + msinfo + "_" + "logs/" + exp + "_" + (cond_num + 1) + ".log";
   PrintWriter pw = createWriter(logName);
   cnt = 0;
+
   return pw;
 }
+
 
 void StopLogging(PrintWriter pw) {
 
@@ -710,6 +628,7 @@ void StopLogging(PrintWriter pw) {
   pw = null;
 }
 
+
 PVector toPV(Point p) {
 
   float px = (float)p.x;
@@ -717,6 +636,7 @@ PVector toPV(Point p) {
 
   return new PVector(px, py);
 }
+
 
 float getDist(PVector s, PVector e, PVector p) {
 
@@ -729,6 +649,7 @@ float getDist(PVector s, PVector e, PVector p) {
   return dist;
 }
 
+
 PVector getNearest(PVector s, PVector e, PVector p) {
 
   PVector se = PVector.sub(e, s);
@@ -740,6 +661,7 @@ PVector getNearest(PVector s, PVector e, PVector p) {
 
   return new PVector(s.x + proj.x, s.y + proj.y);
 }
+
 
 void keyPressed() {
 

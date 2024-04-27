@@ -33,7 +33,15 @@ int lf = 10;
 int pointSize = 50;
 int flip = 1;
 float angleFlip = 1;
-float disP, disPP, disNP, disPreN, sinPT, anglePT; //distance pos, distance normal pos, angle previous target, angle target
+float disP, disPP, disNP, disPreN, sinPT, anglePT;//distance pos, distance normal pos, angle previous target, angle target
+
+ArrayList<Float> errorMAE = new ArrayList<Float>();
+boolean startMAE = false;
+ArrayList<PVector> senNor = new ArrayList<PVector>();
+float[] senNorDis = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+float[] senNorCount = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+float[] senNorRe = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+float minSenPos = 50;
 
 float[] angleL = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; //angle list
 
@@ -50,9 +58,9 @@ boolean visibleMode = false;
 int setDelay = 0;
 int frameRate = 75;
 
-int nPos = 11;
-int[] pos = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100};
-color[] poscol = {
+int nPos = 11; //sensor position number (block factor)
+int[] pos = {0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100}; //sensor position ratio
+color[] poscol = { //sensor position color
   color(0, 0, 255),
   color(0, 0, 127),
   color(0, 0, 0),
@@ -127,7 +135,7 @@ void setup() {
   getMouseInfo(sp);
   setNpos(nPos);
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,PositionValue,Success,Angle0,Angle1,Angle2,Angle3,Angle4,Angle5,Angle6,Angle7,Angle8,Angle9");
+  Pos_Logger.println("Distance,Width,Count,PositionValue,Success,MAE0,MAE1,MAE2,MAE3,MAE4,MAE5,MAE6,MAE7,MAE8,MAE9,MAE10,Angle0,Angle1,Angle2,Angle3,Angle4,Angle5,Angle6,Angle7,Angle8,Angle9");
   cpi_multiplier = (float)cpi / 12000;
   pos_values.add(sensor_pos /100.0);
   cursor_pos = new Point(0, 0);
@@ -357,7 +365,7 @@ void draw() {
 
   disPP = dist(pointPosX, pointPosY, prev.x, prev.y); //distance of cursor-prev.target
   disP = dist(pointPosX, pointPosY, target.x, target.y); //distance of cursor-target
-  disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target
+  disNP = dist(norPosX, norPosY, pointPosX, pointPosY); //distance of normal cursor-target = error of MAE
   disPreN = dist(norPosX, norPosY, prev.x, prev.y); //distance of normal cursor-prev,target
 
   sinPT = disNP/magPP;
@@ -367,22 +375,31 @@ void draw() {
     angleL[0] = anglePT;
   } else if (disPreN >= tarLen/10 && disPreN < tarLen/5) {
     angleL[1] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen/5 && disPreN < tarLen*3/10) {
     angleL[2] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen*3/10 && disPreN < tarLen*2/5) {
     angleL[3] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen*2/5 && disPreN < tarLen/2) {
     angleL[4] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen/2 && disPreN < tarLen*3/5) {
     angleL[5] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen*3/5 && disPreN < tarLen*7/10) {
     angleL[6] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen*7/10 && disPreN < tarLen*4/5) {
     angleL[7] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen*9/10 && disPreN < tarLen) {
     angleL[8] = anglePT;
+    startMAE = true;
   } else if (disPreN >= tarLen) {
     angleL[9] = anglePT;
+    startMAE = true;
   }
 
   stroke(100, fadeA);
@@ -429,6 +446,7 @@ void draw() {
     strokeWeight(2); //normal line (Rail)
     line(sx, sy, startX, startY);
     line(ex, ey, endX, endY);
+    stroke(0, 255, 255);
     line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
 
     noStroke();
@@ -454,11 +472,23 @@ void draw() {
 
   for (int i = 0; i < nPos; i++) {
     PVector CurrentPoint = Positions.get(i);
-    noStroke();
-    fill(poscol[i], test ? 255 : 255);
+
+    PVector nor01 = projectPointOnLine(new PVector(prev.x, prev.y), new PVector(target.x, target.y), CurrentPoint); //사영된 점 계산
+
+    if (startMAE) { //초기 값 빼고 계산
+      senNor.add(nor01);
+      senNorDis[i] += PVector.dist(nor01, CurrentPoint);
+      senNorCount[i] += 1;
+    }
+
     //point of line @
     if (visibleMode) {
+      noStroke();
+      fill(poscol[i], test ? 255 : 255);
       ellipse(CurrentPoint.x, CurrentPoint.y, 5, 5); //sensor circle
+      stroke(poscol[i], test ? 255 : 255);
+      strokeWeight(2);
+      line(CurrentPoint.x, CurrentPoint.y, nor01.x, nor01.y); //cursor normal line
     }
   }
 
@@ -472,6 +502,7 @@ void draw() {
   text(float(sen1Pos)/10, width/2-10, -height/2+112);
   text(dirLen, width/2-10, -height/2+112+34);
   text(anglePT, width/2-10, -height/2+112+68);
+  text(disNP, width/2-10, -height/2+112+112);
   textAlign(LEFT, TOP);
   text("Enter: drawMode", -width/2+10, -height/2+172); //+34
   text("+: gradientPlus", -width/2+10, -height/2+206); //+34
@@ -503,12 +534,42 @@ void OnClick() {
   if (Main_Logger == null && setDelay == 0) {
     Main_Logger = StartLogging_Main(cond, current_cond);
   }
-  String resultA = "";
+
+  String resultA = ""; //angle 값
   for (int i = 0; i < angleL.length; i++) {
     resultA += angleL[i]; // 현재 요소를 문자열로 변환하여 result에 추가합니다.
     if (i < angleL.length - 1) { // 마지막 요소가 아니라면 쉼표를 추가합니다.
       resultA += ",";
     }
+  }
+  String resultM = ""; //MAE 값
+
+  for (int i = 0; i < senNorDis.length; i++) {
+    resultM += senNorDis[i]/senNorCount[i]; // 현재 요소를 문자열로 변환하여 result에 추가합니다.
+    senNorRe[i] = senNorDis[i]/senNorCount[i];
+    if (i < senNorDis.length - 1) { // 마지막 요소가 아니라면 쉼표를 추가합니다.
+      resultM += ",";
+    }
+  }
+
+  float minNorVal = senNorRe[0];
+  int minNorIndex = 0;
+
+  for (int i = 1; i < senNorRe.length; i++) {
+    if (senNorRe[i] < minNorVal) {
+      minNorVal = senNorRe[i];
+      minNorIndex = i;
+    }
+  }
+
+  int senPosDis = minNorIndex*10;
+
+  errorMAE.clear(); //MAE 관련 값 초기화
+  startMAE = false;
+  senNor.clear(); //사영 값 초기화
+  for (int i =0; i < nPos; i++) { //초기화
+    senNorDis[i] = 0;
+    senNorCount[i] = 0;
   }
 
   PVector near = getNearest(Positions.get(0), Positions.get(nPos-1), toPV(target));
@@ -519,13 +580,16 @@ void OnClick() {
   if (success_prev) cnt_success++;
   dots.add(near);
 
+  setPOS(sp, (sensor_pos*9 + int(senPosDis))/10);
+  getMouseInfo(sp);
+
   if (cnt > 1) {
-    if (senPos < 1.0 && senPos >= 0) {
+    if (senPos < 1.5 && senPos >= -0.5) {
       trialSuccess = "T";
     } else {
       trialSuccess = "F";
     }
-    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultA;
+    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultM + "," + resultA;
     Pos_Logger.println(Log);
     Pos_Logger.flush();
   }
@@ -658,7 +722,7 @@ PrintWriter StartLogging_Pos() {
   log_yy = now.format(fmt1);
 
   String CurrentMode = test ? "Main" : "Practice";
-  String msinfo = cpi + "_" + sensor_pos;
+  String msinfo = cpi+"";
   String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
   boolean folderExist = new File("./Logs/" + folderName).exists();
   println(folderExist);
@@ -684,7 +748,7 @@ PrintWriter StartLogging_Main(ArrayList<Experiment> conditions, int cond_num) {
 
   Experiment exp = conditions.get(cond_num);
   String CurrentMode = test ? "Main" : "Practice";
-  String msinfo = cpi + "_" + sensor_pos;
+  String msinfo = cpi+"";
   String folderName = userName + "_" + testMode + "_" +  testType + "_" +  testTrial;
   while (new File("./Logs/" + folderName).exists()) {
     testTrial++;
@@ -739,6 +803,15 @@ PVector getNearest(PVector s, PVector e, PVector p) {
   PVector proj = se.mult(mag);
 
   return new PVector(s.x + proj.x, s.y + proj.y);
+}
+
+PVector projectPointOnLine(PVector target, PVector prev, PVector CurrentPoint) { //직선에 사영된 점 구하기 CurrentPoint점에서 prev-target로 이어지는 직선에 사영된 점을 구함.
+  PVector lineDirection = PVector.sub(target, prev).normalize();   // 직선의 방향벡터 구하기
+  PVector toCurrentPoint = PVector.sub(CurrentPoint, prev);   // target에서 CurrentPoint로 향하는 벡터 구하기
+  PVector projection = PVector.mult(lineDirection, PVector.dot(toCurrentPoint, lineDirection));   // toCurrentPoint를 lineDirection에 사영하여 구한 벡터
+  PVector projectedPoint = PVector.add(prev, projection);   // 사영된 점의 좌표 구하기
+
+  return projectedPoint;
 }
 
 void keyPressed() {

@@ -135,7 +135,7 @@ void setup() {
   getMouseInfo(sp);
   setNpos(nPos);
   Pos_Logger = StartLogging_Pos();
-  Pos_Logger.println("Distance,Width,Count,PositionValue,Success,MAE0,MAE1,MAE2,MAE3,MAE4,MAE5,MAE6,MAE7,MAE8,MAE9,MAE10,Angle0,Angle1,Angle2,Angle3,Angle4,Angle5,Angle6,Angle7,Angle8,Angle9");
+  Pos_Logger.println("Distance,Width,Count,PositionValue,Success,MAE0,MAE1,MAE2,MAE3,MAE4,MAE5,MAE6,MAE7,MAE8,MAE9,MAE10,Angle0,Angle1,Angle2,Angle3,Angle4,Angle5,Angle6,Angle7,Angle8,Angle9,cpi");
   cpi_multiplier = (float)cpi / 12000;
   pos_values.add(sensor_pos /100.0);
   cursor_pos = new Point(0, 0);
@@ -589,7 +589,7 @@ void OnClick() {
     } else {
       trialSuccess = "F";
     }
-    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultM + "," + resultA;
+    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultM + "," + resultA + "," + sensor_pos;
     Pos_Logger.println(Log);
     Pos_Logger.flush();
   }

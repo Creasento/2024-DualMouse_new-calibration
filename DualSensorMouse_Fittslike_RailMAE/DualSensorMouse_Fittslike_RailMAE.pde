@@ -78,8 +78,8 @@ color[] poscol = { //sensor position color
 };
 
 int nRepeat = 1; //each trial is D*W
-int cycle = 11; //number of circle
-int[] distances = {400, 600, 800, 1000, 1200}; //radius of each circle
+int cycle = 15; //number of circle
+int[] distances = {300, 900}; //radius of each circle
 int[] widths = {30, 60, 90};
 
 int current_cond = 0;
@@ -298,7 +298,7 @@ void draw() {
   float intersectionY = slope * intersectionX + yIntercept;
   float pointCX = intersectionX;
   float pointCY = intersectionY;
-  float tarLen = dist(prev.x, prev.y, target.x, target.y);
+  float tarLen = dist(prev.x, prev.y, target.x, target.y); //prev target과 current target간의 거리
   float dirLen = dist(centerX, centerY, target.x, target.y); //length that center of cursor and target
 
   float slopeValueX = prev.x-target.x;

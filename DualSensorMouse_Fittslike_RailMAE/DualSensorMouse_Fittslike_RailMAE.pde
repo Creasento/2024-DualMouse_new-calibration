@@ -16,6 +16,9 @@ int limitTrial = 15; //limit of trial
 String userName = "BMH";
 String testMode = "railAngle";
 
+int startTime;
+int waitTime = 500; // 기다릴 시간(밀리초)
+
 //caution: sen1Pos 1 is always lower than sen2Pos (default value is sen1Pos: 0, sen2Pos: 10)
 int sen1Pos = 0;
 int sen2Pos = 10;
@@ -103,6 +106,7 @@ float senPos;
 float ratio = float(sen2Pos-sen1Pos)/10;
 
 void setup() {
+  startTime = millis();
   LocalDateTime now = LocalDateTime.now();
   DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy_MM_dd_HH_mm_ss");
   log_id = now.format(fmt);
@@ -128,7 +132,7 @@ void setup() {
   current_exp = cond.get(current_cond);
 
   printArray(Serial.list());
-  sp = new Serial(this, "COM4", 115200);
+  sp = new Serial(this, "COM6", 9600);
   sp.clear();
   if (def_cpi != 0) setCPI(sp, def_cpi);
   if (def_pos != 0) setPOS(sp, def_pos);
@@ -580,8 +584,10 @@ void OnClick() {
   if (success_prev) cnt_success++;
   dots.add(near);
 
-  setPOS(sp, (sensor_pos*9 + int(senPosDis))/10); //센서포지션의 변화 비율. 현재는 1:9
-  getMouseInfo(sp);
+  //setPOS(sp, (sensor_pos*9 + int(senPosDis))/10); //센서포지션의 변화 비율. 현재는 1:9
+
+  //getMouseInfo(sp);
+
 
   if (cnt > 1) {
     if (senPos < 1.5 && senPos >= -0.5) {
@@ -589,7 +595,7 @@ void OnClick() {
     } else {
       trialSuccess = "F";
     }
-    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultM + "," + resultA + "," + sensor_pos;
+    String Log = current_exp.toString().replace("_", ",") + "," + (cnt-1) + "," + String.format("%.2f", senPos) + "," + trialSuccess + "," + resultM + "," + resultA + "," + senPosDis;
     Pos_Logger.println(Log);
     Pos_Logger.flush();
   }
@@ -651,26 +657,34 @@ int setCPI(Serial port, int newCPI) {
 }
 
 int setPOS(Serial port, int newPOS) {
-
+  port.clear();
   port.write("s\n");
   port.clear();
   port.write("P" + newPOS + "\n");
   port.clear();
+
   String read = "";
   while (splitTokens(trim(read)).length < 2) {
     read = null;
     while (read == null) read = port.readStringUntil(lf);
   }
 
-  port.write("S\n");
+  if (millis() - startTime < waitTime) { //버퍼
+    // 기다리는 동안 수행할 작업
+  } else { // 기다리는 시간이 지나면 다음 동작 수행
+    port.clear();
+    port.write("S\n");
+    port.clear();
+  }
+
+
   return int(splitTokens(trim(read))[0]);
 }
 
 void getMouseInfo(Serial port) {
-
+  port.clear();
   port.write("s\n");
   port.clear();
-
   port.write("R\n");
   port.clear();
 
@@ -681,17 +695,20 @@ void getMouseInfo(Serial port) {
     while (read == null) read = port.readStringUntil(lf);
   }
 
-  sensor_pos = int(splitTokens(trim(read))[1]);
-  mouse_info = "Current Sensor Position : " + sensor_pos + "\n";
+  if (splitTokens(trim(read)).length == 2) {
+    sensor_pos = int(splitTokens(trim(read))[1]);
+    mouse_info = "Current Sensor Position : " + sensor_pos + "\n";
 
-  read = null;
-  while (read == null) read = port.readStringUntil(lf);
+    read = null;
+    while (read == null) read = port.readStringUntil(lf);
 
-  cpi = int(splitTokens(trim(read))[1]);
-  mouse_info += "Current CPI : " + cpi;
+    cpi = int(splitTokens(trim(read))[1]);
+    mouse_info += "Current CPI : " + cpi;
 
-  port.clear();
-  port.write("S/n");
+    port.clear();
+    port.write("S\n");
+    port.clear();
+  }
 }
 
 void setNpos(int nPos) {

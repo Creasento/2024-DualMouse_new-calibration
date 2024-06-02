@@ -10,10 +10,10 @@ import java.awt.event.*;
 
 Serial sp;
 
-int Try = 1;
+int Try = 2;
 int testTrial = 9;
-int limitTrial = 15; //limit of trial
-String userName = "BMH";
+int limitTrial = 100; //limit of trial
+String userName = "LYS";
 String testMode = "railAngle";
 
 int startTime;
@@ -39,7 +39,7 @@ float angleFlip = 1;
 float disP, disPP, disNP, disPreN, sinPT, anglePT;//distance pos, distance normal pos, angle previous target, angle target
 
 ArrayList<Float> errorMAE = new ArrayList<Float>();
-boolean startMAE = false;
+boolean startMAE = true;
 ArrayList<PVector> senNor = new ArrayList<PVector>();
 float[] senNorDis = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 float[] senNorCount = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
@@ -55,7 +55,7 @@ Point prev = new Point(0, 0);
 boolean test = false;
 boolean clicked = false;
 boolean success_prev = false;
-boolean fadeMode = true;
+boolean fadeMode = false;
 boolean visibleMode = false;
 
 int setDelay = 0;
@@ -77,10 +77,10 @@ color[] poscol = { //sensor position color
   color(83, 83, 83)
 };
 
-int nRepeat = 1; //each trial is D*W
+int nRepeat = 3; //each trial is D*W
 int cycle = 15; //number of circle
 int[] distances = {300, 900}; //radius of each circle
-int[] widths = {30, 60, 90};
+int[] widths = {20, 50, 120};
 
 int current_cond = 0;
 Experiment current_exp;
@@ -99,7 +99,6 @@ ArrayList<PVector> dots = new ArrayList<PVector>();
 ArrayList<PVector> Positions = new ArrayList<PVector>(nPos);
 ArrayList<Float> pos_values = new ArrayList<Float>();
 
-float val = 0.5;
 float fadeA = 100;
 
 float senPos;
@@ -176,13 +175,11 @@ void draw() {
 
   if (!test) {
     textAlign(RIGHT, TOP);
-    float acc = ((float)cnt_success / cnt_trial) * 100;
-    text("Accuracy | " + acc + "%", width - 10, 10);
     text("( " + cursor_pos.x + " , " + cursor_pos.y + " )", width - 10, 44);
   }
 
   textAlign(CENTER, CENTER);
-  text(cnt + "/" + cycle, width/2, height/2);
+  //text(cnt + "/" + cycle, width/2, height/2);
 
   fill(150);
   rect(60, height/2, 80, 50*(nPos+1), 10);
@@ -411,67 +408,69 @@ void draw() {
   line(sx, sy, ex, ey);
 
   if (visibleMode) {
+    /*
     stroke(255, 255, 0);
-    strokeWeight(2);
-    line(pointPosX, pointPosY, target.x, target.y); //현재 커서(senPos)와 이전 타겟간의 직선
-    stroke(0, 255, 255);
-    strokeWeight(2);
-    line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 직선
+     strokeWeight(2);
+     line(pointPosX, pointPosY, target.x, target.y); //현재 커서(senPos)와 이전 타겟간의 직선
+     stroke(0, 255, 255);
+     strokeWeight(2);
+     line(pointPosX, pointPosY, prev.x, prev.y); //현재 커서(senPos)와 이전 타겟간의 직선
+     
+     stroke(0);
+     strokeWeight(2);
+     line(xLeft, yLeft, xRight, yRight); //horizental line
+     
+     noStroke();
+     fill(0, 0, 255); //blue point was left on screen(click point)
+     for (int i = 1; i < 10; i++) {
+     float t = i / 10.0;
+     float PPx = lerp(prev.x, target.x, t); // x 좌표를 계산
+     float PPy = lerp(prev.y, target.y, t); // y 좌표를 계산
+     ellipse(PPx, PPy, 10, 10); //draw
+     }
+     
+     for (PVector p : dots) {
+     //after click
+     noStroke();
+     fill(0, 0, 255); //blue point was left on screen(click point)
+     ellipse(p.x, p.y, 5, 5);
+     }
+     
+     stroke(0, 255, 0);
+     strokeWeight(2);
+     line(target.x, target.y, intersectionX, intersectionY); //normal vector line
+     
+     stroke(0);
+     strokeWeight(2);
+     line(centerX, centerY, target.x, target.y); //line that distance middle of point-middle of the pointer @
+     
+     noStroke();
+     fill(0, 0, 255); //blue point was left on screen(click point)
+     ellipse(sx, sy, 15, 15); //sensor start
+     noStroke();
+     fill(255, 0, 0); //red point was right on screen
+     ellipse(ex, ey, 15, 15); //sensor end
+     
+     stroke(255, 0, 0);
+     strokeWeight(2); //normal line (Rail)
+     line(sx, sy, startX, startY);
+     line(ex, ey, endX, endY);
+     stroke(0, 255, 255);
+     line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
+     */
 
     stroke(0, 0, 255);
     strokeWeight(2);
     line(prev.x, prev.y, target.x, target.y); //line of each targets (prev+target)
 
-    stroke(0);
-    strokeWeight(2);
-    line(xLeft, yLeft, xRight, yRight); //horizental line
+    noStroke();
+    fill(0, 255, 255);
+    ellipse(norPosX, norPosY, 10, 10);
 
     noFill();
     stroke(255, 0, 0);
     strokeWeight(2);
     line(startX, startY, endX, endY); //sensor line
-
-    stroke(0, 255, 0);
-    strokeWeight(2);
-    line(target.x, target.y, intersectionX, intersectionY); //normal vector line
-
-    stroke(0);
-    strokeWeight(2);
-    line(centerX, centerY, target.x, target.y); //line that distance middle of point-middle of the pointer @
-
-    noStroke();
-    fill(0, 0, 255); //blue point was left on screen(click point)
-    ellipse(sx, sy, 15, 15); //sensor start
-    noStroke();
-    fill(255, 0, 0); //red point was right on screen
-    ellipse(ex, ey, 15, 15); //sensor end
-
-    stroke(255, 0, 0);
-    strokeWeight(2); //normal line (Rail)
-    line(sx, sy, startX, startY);
-    line(ex, ey, endX, endY);
-    stroke(0, 255, 255);
-    line(norPosX, norPosY, pointPosX, pointPosY); //cursor normal line
-
-    noStroke();
-    fill(0, 255, 255);
-    ellipse(norPosX, norPosY, 10, 10);
-
-    noStroke();
-    fill(0, 0, 255); //blue point was left on screen(click point)
-    for (int i = 1; i < 10; i++) {
-      float t = i / 10.0;
-      float PPx = lerp(prev.x, target.x, t); // x 좌표를 계산
-      float PPy = lerp(prev.y, target.y, t); // y 좌표를 계산
-      ellipse(PPx, PPy, 10, 10); //draw
-    }
-
-    for (PVector p : dots) {
-      //after click
-      noStroke();
-      fill(0, 0, 255); //blue point was left on screen(click point)
-      ellipse(p.x, p.y, 5, 5);
-    }
   }
 
   for (int i = 0; i < nPos; i++) {
@@ -501,20 +500,20 @@ void draw() {
   fill(25);
 
   //TEXT
+  /*
   textAlign(RIGHT, TOP);
   text(senPos, width/2-10, -height/2+78); //+34
   text(float(sen1Pos)/10, width/2-10, -height/2+112);
   text(dirLen, width/2-10, -height/2+112+34);
   text(anglePT, width/2-10, -height/2+112+68);
   text(disNP, width/2-10, -height/2+112+112);
+  */
   textAlign(LEFT, TOP);
   text("Enter: drawMode", -width/2+10, -height/2+172); //+34
-  text("+: gradientPlus", -width/2+10, -height/2+206); //+34
-  text("-: gradientMinus", -width/2+10, -height/2+240); //+34
 
   fill(25, 35);
   textAlign(LEFT, BOTTOM);
-  text("CircleMode_V1.0", -width/2+10, height/2-16); //+34
+  text("RailMode_V2.0", -width/2+10, height/2-16); //+34
 
   popMatrix();
 }
@@ -862,10 +861,6 @@ void keyPressed() {
     exit();
   } else if (key == ENTER) {
     visibleMode = !visibleMode;
-  } else if (key == '+') {
-    val += 0.1;
-  } else if (key == '-') {
-    val -= 0.1;
   } else if (key == 'f') {
     fadeMode = !fadeMode;
   }

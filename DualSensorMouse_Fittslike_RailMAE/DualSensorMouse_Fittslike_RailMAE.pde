@@ -33,7 +33,7 @@ int def_cpi = 0;
 int def_pos = 0;
 float cpi_multiplier;
 int lf = 10;
-int pointSize = 50;
+int pointSize = 150;
 int flip = 1;
 float angleFlip = 1;
 float disP, disPP, disNP, disPreN, sinPT, anglePT;//distance pos, distance normal pos, angle previous target, angle target
@@ -55,7 +55,7 @@ Point prev = new Point(0, 0);
 boolean test = false;
 boolean clicked = false;
 boolean success_prev = false;
-boolean fadeMode = false;
+boolean fadeMode = true;
 boolean visibleMode = false;
 
 int setDelay = 0;
@@ -79,7 +79,7 @@ color[] poscol = { //sensor position color
 
 int nRepeat = 3; //each trial is D*W
 int cycle = 15; //number of circle
-int[] distances = {300, 900}; //radius of each circle
+int[] distances = {900}; //radius of each circle
 int[] widths = {20, 50, 120};
 
 int current_cond = 0;

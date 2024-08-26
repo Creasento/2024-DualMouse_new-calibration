@@ -126,7 +126,7 @@ void setup() {
   current_exp = cond.get(current_cond);
 
   printArray(Serial.list());
-  sp = new Serial(this, "COM4", 115200);
+  sp = new Serial(this, "COM9", 115200);
   sp.clear();
   if (def_cpi != 0) setCPI(sp, def_cpi);
   if (def_pos != 0) setPOS(sp, def_pos);
